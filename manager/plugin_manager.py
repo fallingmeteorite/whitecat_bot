@@ -125,7 +125,6 @@ def reload_plugin(path_to_watch: str, original_folder: str, reload_enable: bool,
                 logger.debug("插件加载完成")
     except Exception as error:
         logger.error(f"插件加载出现问题,请确认插件是否存在错误,报错信息: {error}")
-        logger.debug(f"主动回收内存中信息：{gc.collect()}")
     finally:
         logger.debug(f"主动回收内存中信息：{gc.collect()}")
 

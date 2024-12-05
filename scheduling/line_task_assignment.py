@@ -43,6 +43,7 @@ class LineTask:
 
     def scheduler(self):
         """调度函数"""
+        # 设置最大并行任务,超过时排队等待
         with ThreadPoolExecutor(max_workers=4) as executor:
             while not self.scheduler_stop_event.is_set():
                 with self.condition:

@@ -45,7 +45,9 @@ class UserUsageTracker:
                         if str(item[0]) == str(uid):
                             data[i][str(uid)] = count + 1
             self.save_data(data)
+            # 没有达到最大使用次数
             return True
+        # 文件中找不到这个uid,判断为第一次使用
         return True
 
 

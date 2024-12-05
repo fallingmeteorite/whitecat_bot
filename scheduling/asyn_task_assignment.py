@@ -58,8 +58,6 @@ class AsynTask:
                 if task is None:
                     break
 
-                id, func, args, kwargs = task
-
                 # 直接将任务提交给事件循环执行
                 asyncio.run_coroutine_threadsafe(self.execute_task(task), self.loop)
 
@@ -96,7 +94,7 @@ class AsynTask:
         with self.condition:
             self.condition.notify_all()
 
-        # 停止事件循环
+        # 停止事件循环,(防止时间循环还没开启就结束会引发报错)
         try:
             self.loop.call_soon_threadsafe(self.loop.stop)
         except:
