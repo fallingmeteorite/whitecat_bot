@@ -1,0 +1,51 @@
+# WebSocket服务器的地址
+websocket_uri: ""
+websocket_port:
+
+#插件地址
+filters_dir: ./filters_plugins
+file_dir: ./file_plugins
+plugin_dir: ./function_plugins
+timer_dir: ./timers_plugins
+
+
+#全局黑名单
+ban_uesr_list: []
+
+ban_group_list: []
+
+#过滤器白名单
+valid_listen_gids: []
+  
+valid_listen_uids: []
+
+#插件黑名单
+ban_plugin_gids: []
+ 
+ban_plugin_uids: []
+
+#定时器发送消息的群
+timer_gids: []
+
+#启动插件热加载
+enable_hot_loading: true
+
+# 最大排队队列
+maximum_queue: 12
+
+# 用户信息储存
+user_use_file: ./user_use_count.txt
+
+# 限制使用次数的群
+use_restricted_groups: []
+
+# 限制最大使用次数
+maximum_number_uses: 28
+
+# 当任务超过多少秒后杀死(单位:秒)
+watch_dog_time: 120
+
+#管理员
+admin: []
+ 
+
