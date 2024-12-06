@@ -6,8 +6,8 @@ import websockets
 import websockets.exceptions
 import websockets.server
 
-from manager.timer_manager import timer_manager
 from common.message_process import messageprocess
+from manager.timer_manager import timer_manager
 from common.config import config
 from common.log import logger
 from core.globals import glob_instance
@@ -31,9 +31,7 @@ class WebSocketManager:
         返回值:
         无返回值。该函数通过异步方式执行，并在连接关闭时结束。
         """
-        # 定时器发送消息的群聊卸载gid中
-        # 定时器管理的封禁方式下发给定时器自己处理,这里也做了一个
-        timer_manager.handle_command(glob_instance.ws, gid=config["timer_gids"])
+        timer_manager.handle_command(glob_instance.ws, gid=config["timer_gids_list"])
 
         try:
             # 主循环，持续接收并处理WebSocket消息

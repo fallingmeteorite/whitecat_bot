@@ -4,11 +4,10 @@ import time
 
 from common.config import config
 from common.log import logger
-from common.message_send import send_message
+from manager.block_manager import ban_filter, ban_plugin
 from manager.file_manager import file_manager
 from manager.filter_manager import filter_manager
 from manager.plugin_manager import plugin_manager, find_plugin_by_command
-from manager.user_manager import tracker
 
 
 class MessageProcess:
@@ -74,15 +73,16 @@ class MessageProcess:
                 # 获取队列中的信息但是不修改队列
                 websocket, uid, nickname, gid, message_dict = item
                 message_list = message_dict['message']
-                if gid in config['valid_listen_gids'] or uid in config['valid_listen_uids']:
-                    for filter_name, filter_rule in filter_manager.filters.items():
+                for filter_name, filter_rule in filter_manager.filters.items():
+                    if ban_filter(uid, gid, filter_name):
                         for message in message_list:
                             # 如果找到匹配项，则处理消息
                             if filter_rule == message["type"]:
                                 logger.debug(f"过滤器触发")
                                 # 从队列中移除匹配项,防止占用队列空间
                                 self.message_queue.queue.remove(item)
-                                filter_manager.handle_message(websocket, uid, gid, message_dict, message, filter_name)
+                                filter_manager.handle_message(websocket, uid, gid, message_dict, message,
+                                                              filter_name)
                                 break
 
     def plugin(self):
@@ -93,34 +93,36 @@ class MessageProcess:
             # 将插件加载器的判断逻辑移到这里
             for item in list(self.message_queue.queue):
                 websocket, uid, nickname, gid, message_dict = item
-                if uid in config['admin'] or (
-                        gid not in config['ban_plugin_gids'] and uid not in config['ban_plugin_uids']):
-                    # 解析命令和参数
-                    tmp_message = ""
-                    message_list = message_dict['message']
-                    for data in message_list:
-                        if data['type'] == 'text':
-                            tmp_message = tmp_message + data['data']['text']
-                    if tmp_message == "":
-                        # 如果没有消息,跳出这次循环
-                        continue
+                # 解析命令和参数
+                tmp_message = ""
+                message_list = message_dict['message']
+                for data in message_list:
+                    if data['type'] == 'text':
+                        tmp_message = tmp_message + data['data']['text']
+                if tmp_message == "":
+                    # 如果没有消息,跳出这次循环
+                    continue
 
-                    command, *args = tmp_message.split()
+                command, *args = tmp_message.split()
 
-                    # 通过命令查找对应的插件
-                    plugin_name = find_plugin_by_command(command, plugin_manager.plugin_info)
+                # 通过命令查找对应的插件
+                plugin_name = find_plugin_by_command(command, plugin_manager.plugin_info)
+                if ban_plugin(uid, gid, plugin_name):
                     if plugin_name is not None:
                         # :param uid: 用户ID。
                         # :param gid: 群组ID。
                         # 对限制使用次数的群做处理,查看是否达到最大使用次数,是则不执行
-                        if tracker.use_detections(uid, gid):
-                            logger.debug(f"功能调用触发")
-                            # 从队列中移除匹配项,防止占用队列空间
-                            self.message_queue.queue.remove(item)
-                            plugin_manager.handle_command(websocket, uid, gid, nickname, message_dict, plugin_name)
-                        else:
-                            send_message(websocket, uid, gid,
-                                         message="你的使用次数到达上限,请等待次数刷新,顺便休息下吧")
+
+                        logger.debug(f"功能调用触发")
+                        # 从队列中移除匹配项,防止占用队列空间
+                        self.message_queue.queue.remove(item)
+                        plugin_manager.handle_command(websocket, uid, gid, nickname, message_dict, plugin_name)
+                        break
+                    else:
+                        break
+
+                else:
+                    break
 
     def file(self):
         while not self.stop_event.is_set():
@@ -138,12 +140,17 @@ class MessageProcess:
                         self.message_queue.queue.remove(item)
                         file_manager.handle_command(websocket, uid, gid, nickname, message_dict,
                                                     message_dict["message"][0]["data"]["file"])
+                        break
+                    else:
+                        break
+                else:
+                    break
 
     # 处理无效消息
     def monitor(self):
         count = 0
         while not self.stop_event.is_set():
-            time.sleep(1)  # 每秒检查一次
+            time.sleep(1.0)  # 每秒检查一次
             if self.message_queue.empty():
                 continue
             now_message = self.message_queue.queue[0]
@@ -151,8 +158,8 @@ class MessageProcess:
             if self.message_queue.queue[0] == now_message:
                 count += 1
                 if count >= 2:
-                    self.message_queue.queue.remove()
-                    logger.debug(f"监测到无用信息,已经从信息队列中删除")
+                    none = self.message_queue.get()
+                    logger.debug(f"监测到无用信息,已经从信息队列中删除: {none}")
                     count = 0
 
     # 结束多线程任务

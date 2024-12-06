@@ -7,6 +7,8 @@ from common.file_monitor import start_monitoring
 from common.log import logger
 from common.module_load import load
 from scheduling.thread_scheduling import add_task
+from manager.user_manager import tracker
+from common.message_send import send_message
 
 load_module_dict = {}
 
@@ -40,9 +42,12 @@ class PluginManager:
 
     # 处理命令的异步方法
     def handle_command(self, websocket, uid, gid, nickname, message_dict, plugin_name):
-        handler = self.plugins[plugin_name]
-        add_task(plugin_name, handler, self.plugins_asynchronous[plugin_name], websocket, uid, nickname, gid,
+        if tracker.use_detections(uid, gid):
+            handler = self.plugins[plugin_name]
+            add_task(plugin_name, handler, self.plugins_asynchronous[plugin_name], websocket, uid, nickname, gid,
                  message_dict)
+        else:
+            send_message(websocket, None, gid, message="今天你的使用次数到达上线了,休息一会吧")
 
 
 # 定义插件卸载器类
