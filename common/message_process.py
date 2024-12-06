@@ -1,11 +1,13 @@
 import queue
 import threading
 import time
-from common.log import logger
+
 from common.config import config
-from manager.plugin_manager import plugin_manager, find_plugin_by_command
+from common.log import logger
+from common.message_send import send_message
 from manager.file_manager import file_manager
 from manager.filter_manager import filter_manager
+from manager.plugin_manager import plugin_manager, find_plugin_by_command
 from manager.user_manager import tracker
 
 
@@ -29,11 +31,11 @@ class MessageProcess:
         if not self.lock:
             self.lock = True
             # 开启消息处理线程
-            #不设置守护线程,因为任务调度也在这个线程下面
-            threading.Thread(target=self.plugin, args=()).start() # 处理插件消息
-            threading.Thread(target=self.file, args=()).start() # 处理筛选器消息
-            threading.Thread(target=self.filter, args=()).start() # 处理筛选器消息
-            threading.Thread(target=self.monitor, args=()).start() # 处理无用消息
+            # 不设置守护线程,因为任务调度也在这个线程下面
+            threading.Thread(target=self.plugin, args=()).start()  # 处理插件消息
+            threading.Thread(target=self.file, args=()).start()  # 处理筛选器消息
+            threading.Thread(target=self.filter, args=()).start()  # 处理筛选器消息
+            threading.Thread(target=self.monitor, args=()).start()  # 处理无用消息
 
     def unwrap_quote(self, m):
         return m.replace("&", "&").replace("[", "[").replace("]", "]").replace(",", ",")
@@ -116,6 +118,9 @@ class MessageProcess:
                             # 从队列中移除匹配项,防止占用队列空间
                             self.message_queue.queue.remove(item)
                             plugin_manager.handle_command(websocket, uid, gid, nickname, message_dict, plugin_name)
+                        else:
+                            send_message(websocket, uid, gid,
+                                         message="你的使用次数到达上限,请等待次数刷新,顺便休息下吧")
 
     def file(self):
         while not self.stop_event.is_set():
@@ -153,6 +158,7 @@ class MessageProcess:
     # 结束多线程任务
     def stop(self):
         self.stop_event.set()
+
 
 # 实例化对象
 messageprocess = MessageProcess()
