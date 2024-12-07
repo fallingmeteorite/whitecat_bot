@@ -91,7 +91,7 @@ def register(plugin_manager):
     """
     plugin_manager.register_plugin(
         name=PLUGIN_NAME,
-        commands=["del_cache1"],
+        commands=["del_cache"],
         asynchronous=False,
         handler=lambda websocket, uid, nickname, gid, message_dict: del_cache(websocket, uid, nickname, gid,
                                                                               message_dict),

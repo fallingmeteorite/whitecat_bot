@@ -36,10 +36,6 @@ log_dir = os.path.join(current_dir, 'log')
 if not os.path.exists(log_dir):
     os.makedirs(log_dir)
 
-# 确保日志文件夹存在
-if not os.path.exists(log_dir):
-    os.makedirs(log_dir)
-
 default_format: str = (
     "<g>{time:MM-DD HH:mm:ss}</g> "
     "[<lvl>{level}</lvl>] "
@@ -60,7 +56,7 @@ LOG_LEVEL = "INFO"
 
 try:
     # 使用绝对路径
-    log_file_path = os.path.join(log_dir, 'data_{time:YYYY_DD}.log')
+    log_file_path = './log/data_{time:YYYY_DD}.log'
 
     # 设置日志等级
     logger.add(

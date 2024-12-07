@@ -1,6 +1,6 @@
 import psutil
 
-from common import send_message  # 导入发送消息的函数
+from common.message_send import send_message  # 导入发送消息的函数
 
 PLUGIN_NAME = "服务器情况查询"  # 自定义插件名称
 
@@ -85,7 +85,7 @@ def register(plugin_manager):
     """
     plugin_manager.register_plugin(
         name=PLUGIN_NAME,
-        commands=["服务器情况", "服务器状况"],
+        commands=["内存情况"],
         asynchronous=False,
         handler=lambda websocket, uid, nickname, gid, message_dict: echo(websocket, uid, nickname, gid,
                                                                          message_dict),

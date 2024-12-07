@@ -1,5 +1,7 @@
-from common import send_message, get_directories  # 导入发送消息的函数
-from initialize import config, logger
+from common.config import config
+from common.log import logger
+from common.message_send import send_message, get_directories  # 导入发送消息的函数
+
 PLUGIN_NAME = "插件包情况查询"  # 自定义插件名称
 
 
