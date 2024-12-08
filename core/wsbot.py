@@ -31,9 +31,9 @@ class WebSocketManager:
         返回值:
         无返回值。该函数通过异步方式执行，并在连接关闭时结束。
         """
-        timer_manager.handle_command(glob_instance.ws, gid=config["timer_gids_list"])
-
         try:
+            # 开启定时器
+            timer_manager.handle_command(glob_instance.ws, gid=config["timer_gids_list"])
             # 主循环，持续接收并处理WebSocket消息
             while True:
                 if not self.alive:
