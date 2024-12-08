@@ -1,6 +1,7 @@
 from common.config import config
 from common.log import logger
-from common.message_send import send_message, get_directories  # 导入发送消息的函数
+from common.message_send import send_message  # 导入发送消息的函数
+from common.module_load import get_directories
 
 PLUGIN_NAME = "插件包情况查询"  # 自定义插件名称
 
@@ -46,7 +47,7 @@ def register(plugin_manager):
     """
     plugin_manager.register_plugin(
         name=PLUGIN_NAME,
-        commands=["服务器包", "插件包情况"],
+        commands=["插件列表"],
         asynchronous=False,
         handler=lambda websocket, uid, nickname, gid, message_dict: echo(websocket, uid, nickname, gid,
                                                                          message_dict),

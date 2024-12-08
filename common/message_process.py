@@ -72,10 +72,9 @@ class MessageProcess:
             for item in list(self.message_queue.queue):
                 # 获取队列中的信息但是不修改队列
                 websocket, uid, nickname, gid, message_dict = item
-                message_list = message_dict['message']
                 for filter_name, filter_rule in filter_manager.filters.items():
                     if ban_filter(uid, gid, filter_name):
-                        for message in message_list:
+                        for message in message_dict['message']:
                             # 如果找到匹配项，则处理消息
                             if filter_rule == message["type"]:
                                 logger.debug(f"过滤器触发")
@@ -84,6 +83,8 @@ class MessageProcess:
                                 filter_manager.handle_message(websocket, uid, gid, message_dict, message,
                                                               filter_name)
                                 break
+
+
 
     def plugin(self):
         while not self.stop_event.is_set():
@@ -117,12 +118,7 @@ class MessageProcess:
                         # 从队列中移除匹配项,防止占用队列空间
                         self.message_queue.queue.remove(item)
                         plugin_manager.handle_command(websocket, uid, gid, nickname, message_dict, plugin_name)
-                        break
-                    else:
-                        break
 
-                else:
-                    break
 
     def file(self):
         while not self.stop_event.is_set():
@@ -140,17 +136,13 @@ class MessageProcess:
                         self.message_queue.queue.remove(item)
                         file_manager.handle_command(websocket, uid, gid, nickname, message_dict,
                                                     message_dict["message"][0]["data"]["file"])
-                        break
-                    else:
-                        break
-                else:
-                    break
+
 
     # 处理无效消息
     def monitor(self):
         count = 0
         while not self.stop_event.is_set():
-            time.sleep(1.0)  # 每秒检查一次
+            time.sleep(0.5)  # 每0.5检查一次
             if self.message_queue.empty():
                 continue
             now_message = self.message_queue.queue[0]
