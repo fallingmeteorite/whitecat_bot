@@ -118,6 +118,7 @@ class MessageProcess:
                         # 从队列中移除匹配项,防止占用队列空间
                         self.message_queue.queue.remove(item)
                         plugin_manager.handle_command(websocket, uid, gid, nickname, message_dict, plugin_name)
+                        break
 
 
     def file(self):
@@ -136,6 +137,7 @@ class MessageProcess:
                         self.message_queue.queue.remove(item)
                         file_manager.handle_command(websocket, uid, gid, nickname, message_dict,
                                                     message_dict["message"][0]["data"]["file"])
+                        break
 
 
     # 处理无效消息
