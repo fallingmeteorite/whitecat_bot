@@ -5,7 +5,7 @@ from common.message_send import send_message
 from scheduling.asyn_task_assignment import asyntask
 from scheduling.line_task_assignment import linetask
 
-PLUGIN_NAME = "进程显示"  # 自定义插件名称
+PLUGIN_NAME = "任务显示"  # 自定义插件名称
 
 
 def del_cache(websocket, uid, nickname, gid, message_dict):
