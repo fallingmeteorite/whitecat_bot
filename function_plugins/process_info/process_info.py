@@ -1,7 +1,7 @@
 import time
 
-from common.message_send import send_message
 from common.config import config
+from common.message_send import send_message
 from scheduling.asyn_task_assignment import asyntask
 from scheduling.line_task_assignment import linetask
 
@@ -20,28 +20,28 @@ def del_cache(websocket, uid, nickname, gid, message_dict):
     """
 
     if not uid in config["admin"]:
-        return 
+        return
 
     info = ""
     queue_info = linetask.get_queue_info()
-    info += (f"线性队列大小: {queue_info['queue_size']}, 正在运行的任务数量: {queue_info['running_tasks_count']}\n")
+    info += (f"线性队列数量: {queue_info['queue_size']}, 正在运行的任务数量: {queue_info['running_tasks_count']}\n")
 
     for task_id, details in queue_info['task_details'].items():
         start_time = details.get("start_time", 0)
         end_time = details.get("end_time", 0)
         status = details.get("status", "unknown")
         elapsed_time = end_time - start_time if end_time else time.time() - start_time
-        info += (f"任务ID: {task_id}, 状态: {status}, 已运行时间: {elapsed_time:.2f} 秒\n")
+        info += (f"ID: {task_id}, 进程状态: {status}, 已运行时间: {elapsed_time:.2f} 秒\n")
 
     queue_info = asyntask.get_queue_info()
-    info += (f"异步队列大小: {queue_info['queue_size']}, 正在运行的任务数量: {queue_info['running_tasks_count']}\n")
+    info += (f"异步队列数量: {queue_info['queue_size']}, 正在运行的任务数量: {queue_info['running_tasks_count']}\n")
 
     for task_id, details in queue_info['task_details'].items():
         start_time = details.get("start_time", 0)
         end_time = details.get("end_time", 0)
         status = details.get("status", "unknown")
         elapsed_time = end_time - start_time if end_time else time.time() - start_time
-        info += (f"任务ID: {task_id}, 状态: {status}, 已运行时间: {elapsed_time:.2f} 秒\n")
+        info += (f"ID: {task_id}, 进程状态: {status}, 已运行时间: {elapsed_time:.2f} 秒\n")
 
     return send_message(websocket, uid, gid, message=info)
 
