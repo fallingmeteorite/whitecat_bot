@@ -19,10 +19,6 @@ def echo(websocket, uid, nickname, gid, message_dict):
         show_help(websocket, uid, gid)
         return
 
-    if "CQ" in message_dict["raw_message"] and uid != 3676072566 and uid != 3027312071:
-        send_message(websocket, uid, gid, message="🤡🤡🤡你小子想干什么")
-        return
-
     send_message(websocket, uid, gid, message=message_send)
 
 
@@ -34,9 +30,8 @@ def show_help(websocket, uid, gid):
     :param uid: 用户ID。
     :param gid: 群组ID。
     """
-    help_text = ("用法:\n"
-                 "echo <message> 或 学我 <message> \n"
-                 "此命令会将提供的消息反馈回来。(CQ码内容不会被输出)")
+
+    help_text = ("用法:")
     send_message(websocket, uid, gid, message=help_text)
 
 
@@ -48,7 +43,7 @@ def register(plugin_manager):
     """
     plugin_manager.register_plugin(
         name=PLUGIN_NAME,
-        commands=["echo", "学我"],
-        asynchronous=False, # 如果你的插件是异步运行则改为True
+        commands=["echo"],
+        asynchronous=False,  # 如果你的插件是异步运行则改为True
         handler=lambda websocket, uid, nickname, gid, message_dict: echo(websocket, uid, nickname, gid, message_dict),
     )
