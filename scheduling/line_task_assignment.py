@@ -57,7 +57,7 @@ class LineTask:
                     if self.scheduler_stop_event.is_set():
                         break
 
-                    if len(self.task_queue.queue) == 0:
+                    if self.task_queue.qsize() == 0:
                         break
 
                     task = self.task_queue.get()
