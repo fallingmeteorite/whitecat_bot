@@ -37,7 +37,6 @@ class FilterManager:
         :param gid: 群组ID。
         :param websocket: WebSocket连接对象。
         """
-        # 过滤器逻辑移动至消息处理
         handler = self.filters_func[filter_name]
         add_task(filter_name, handler, self.filters_asynchronous[filter_name], websocket, uid, gid, message,
                  message_dict)
