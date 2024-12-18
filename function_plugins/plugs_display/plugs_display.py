@@ -3,7 +3,7 @@ from common.log import logger
 from common.message_send import send_message  # 导入发送消息的函数
 from common.module_load import get_directories
 
-PLUGIN_NAME = "插件包情况查询"  # 自定义插件名称
+PLUGIN_NAME = "插件展示"  # 自定义插件名称
 
 
 def echo(websocket, uid, nickname, gid, message_dict):

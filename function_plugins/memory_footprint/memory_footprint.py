@@ -2,7 +2,7 @@ import psutil
 
 from common.message_send import send_message  # 导入发送消息的函数
 
-PLUGIN_NAME = "服务器情况查询"  # 自定义插件名称
+PLUGIN_NAME = "内存查询"  # 自定义插件名称
 
 
 def print_memory_usage():
