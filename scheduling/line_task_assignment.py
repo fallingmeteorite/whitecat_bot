@@ -2,11 +2,12 @@ import atexit
 import gc
 import queue
 import threading
+import time
 from concurrent.futures import ThreadPoolExecutor, TimeoutError
 from functools import partial
 
-from common.log import logger
 from common.config import config
+from common.log import logger
 
 
 class LineTask:
@@ -17,7 +18,10 @@ class LineTask:
         # 定义一个字典来存储正在执行的任务
         self.running_tasks = {}
 
-        # 定义一个锁来保护对 running_tasks 的访问
+        # 定义一个字典来存储任务的详细信息
+        self.task_details = {}
+
+        # 定义一个锁来保护对 running_tasks 和 task_details 的访问
         self.lock = threading.Lock()
 
         # 定义一个条件变量来控制调度线程的运行状态
@@ -53,9 +57,10 @@ class LineTask:
                     if self.scheduler_stop_event.is_set():
                         break
 
-                    task = self.task_queue.get()
-                    if task is None:
+                    if len(self.task_queue.queue) == 0:
                         break
+
+                    task = self.task_queue.get()
 
                     id, func, args, kwargs = task
 
@@ -66,6 +71,10 @@ class LineTask:
                         else:
                             # 否则，将任务提交给线程池执行
                             self.running_tasks[id] = True
+                            self.task_details[id] = {
+                                "start_time": time.time(),
+                                "status": "running"
+                            }
                             future = executor.submit(self.execute_task, task)
                             future.add_done_callback(partial(self.task_done, id))
                             # 启动一个线程来监控任务的超时
@@ -81,6 +90,7 @@ class LineTask:
             with self.lock:
                 if id in self.running_tasks:
                     del self.running_tasks[id]
+                    self.task_details[id]["status"] = "timeout"
 
     def task_done(self, id, future):
         """任务完成后的回调函数"""
@@ -88,6 +98,8 @@ class LineTask:
         with self.lock:
             if id in self.running_tasks:
                 del self.running_tasks[id]
+                self.task_details[id]["status"] = "completed"
+                self.task_details[id]["end_time"] = time.time()
 
     def add_task(self, id, func, *args, **kwargs):
         """向队列中添加任务"""
@@ -111,6 +123,16 @@ class LineTask:
         self.scheduler_stop_event.set()
         with self.condition:
             self.condition.notify_all()
+
+    def get_queue_info(self):
+        """获取队列信息"""
+        with self.lock:
+            queue_info = {
+                "queue_size": self.task_queue.qsize(),
+                "running_tasks_count": len(self.running_tasks),
+                "task_details": self.task_details.copy()
+            }
+        return queue_info
 
 
 # 注册退出处理函数

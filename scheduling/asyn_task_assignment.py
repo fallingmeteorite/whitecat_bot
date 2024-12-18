@@ -3,9 +3,11 @@ import atexit
 import gc
 import queue
 import threading
+import time
 
-from common.log import logger
 from common.config import config
+from common.log import logger
+
 
 class AsynTask:
     def __init__(self):
@@ -26,11 +28,23 @@ class AsynTask:
         # 定义一个标志来表示调度线程是否应该停止
         self.scheduler_stop_event = threading.Event()
 
+        # 定义一个字典去展示进程信息
+        self.asyn_processes_list = []
+
+        # 定义一个字典来存储任务的详细信息
+        self.task_details = {}
+
     async def execute_task(self, task):
         """执行任务的函数"""
         id, func, args, kwargs = task
         logger.debug(f"开始运行异步任务,异步任务名称 {id}")
         try:
+            self.asyn_processes_list.append(id)
+            self.task_details[id] = {
+                "start_time": time.time(),
+                "status": "running"
+            }
+
             # 如果执行任务为定时器，不检测超时
             if id == "timer":
                 await asyncio.wait_for(func(*args, **kwargs), timeout=None)
@@ -38,9 +52,14 @@ class AsynTask:
                 await asyncio.wait_for(func(*args, **kwargs), timeout=self.TASK_TIMEOUT)
         except asyncio.TimeoutError:
             logger.warning(f"队列任务|{id}|超时,强制结束")
+            self.task_details[id]["status"] = "timeout"
         except Exception as e:
             logger.error(f"异步任务 {id} 执行失败: {e}")
+            self.task_details[id]["status"] = "failed"
         finally:
+            self.asyn_processes_list.remove(id)
+            self.task_details[id]["end_time"] = time.time()
+            self.task_details[id]["status"] = "completed"
             logger.debug(f"主动回收内存中信息：{gc.collect()}")
 
     def scheduler(self):
@@ -54,9 +73,10 @@ class AsynTask:
                 if self.scheduler_stop_event.is_set():
                     break
 
-                task = self.task_queue.get()
-                if task is None:
+                if len(self.task_queue.queue) == 0:
                     break
+
+                task = self.task_queue.get()
 
                 # 直接将任务提交给事件循环执行
                 asyncio.run_coroutine_threadsafe(self.execute_task(task), self.loop)
@@ -100,8 +120,17 @@ class AsynTask:
         except:
             pass
 
+    def get_queue_info(self):
+        """获取队列信息"""
+        with self.condition:
+            queue_info = {
+                "queue_size": self.task_queue.qsize(),
+                "running_tasks_count": len(self.asyn_processes_list),
+                "task_details": self.task_details.copy()
+            }
+        return queue_info
+
 
 # 注册退出处理函数
 asyntask = AsynTask()
 atexit.register(asyntask.stop_scheduler)
-
