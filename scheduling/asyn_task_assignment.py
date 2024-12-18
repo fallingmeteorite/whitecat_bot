@@ -41,8 +41,9 @@ class AsynTask:
         try:
             self.asyn_processes_list.append(id)
             self.task_details[id] = {
-                "start_time": time.time(),
-                "status": "running"
+                "start_time": time.monotonic(),
+                "status": "running",
+                "continue_timing": True  # 初始状态为继续计时
             }
 
             # 如果执行任务为定时器，不检测超时
@@ -58,7 +59,7 @@ class AsynTask:
             self.task_details[id]["status"] = "failed"
         finally:
             self.asyn_processes_list.remove(id)
-            self.task_details[id]["end_time"] = time.time()
+            self.task_details[id]["end_time"] = time.monotonic()
             self.task_details[id]["status"] = "completed"
             logger.debug(f"主动回收内存中信息：{gc.collect()}")
 

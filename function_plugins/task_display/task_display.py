@@ -41,7 +41,13 @@ def del_cache(websocket, uid, nickname, gid, message_dict):
         end_time = details.get("end_time", 0)
         status = details.get("status", "unknown")
         elapsed_time = end_time - start_time if end_time else time.time() - start_time
-        info += (f"ID: {task_id}, 进程状态: {status}, 已运行时间: {elapsed_time:.2f} 秒\n")
+        # 如果运行时间超过阈值，停止计时并显示 NAN
+        if elapsed_time > 1000:
+            elapsed_time_display = "NAN"
+            details["continue_timing"] = False  # 停止计时
+        else:
+            elapsed_time_display = f"{elapsed_time:.2f} 秒"
+        info += (f"ID: {task_id}, 进程状态: {status}, 已运行时间: {elapsed_time_display} 秒\n")
 
     return send_message(websocket, uid, gid, message=info)
 
