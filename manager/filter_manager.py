@@ -10,7 +10,7 @@ class FilterManager:
     def __init__(self):
         self.filter_info = {}
 
-    def register_filter(self, filter_name, filter_rule, asynchronous, timeout_processing, handler):
+    def register_plugin(self, filter_name, filter_rule, asynchronous, timeout_processing, handler):
         """
         注册一个新的过滤器。
         :param filter_name: 过滤器名称
