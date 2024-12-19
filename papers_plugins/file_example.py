@@ -20,7 +20,8 @@ def register(file_manager):
     """
     file_manager.register_plugin(
         name="",
-        asynchronous=True, #文件加载插件必须用异步,因为涉及到获取文件等操作
+        asynchronous=True,  # 文件加载插件必须用异步,因为涉及到获取文件等操作
+        timeout_processing=True,
         handler=lambda websocket, uid, nickname, gid, fileid: main(websocket, uid, nickname, gid,
-                                                                       fileid),
+                                                                   fileid),
     )
