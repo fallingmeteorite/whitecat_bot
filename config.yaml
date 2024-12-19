@@ -45,7 +45,7 @@ use_restricted_groups: []
 maximum_number_uses: 25
 
 # 当任务超过多少秒后杀死(单位:秒)
-watch_dog_time: 120
+watch_dog_time: 60
 
 #管理员
 admin: []
