@@ -73,18 +73,17 @@ class MessageProcess:
                 # 获取队列中的信息但是不修改队列
                 websocket, uid, nickname, gid, message_dict = item
                 message_list = message_dict['message']
-                for filter_name, filter_rule in filter_manager.filters.items():
+                for filter_name, filter_rule in filter_manager.filter_info.items():
                     if ban_filter(uid, gid, filter_name):
                         for message in message_list:
                             # 如果找到匹配项，则处理消息
-                            if filter_rule == message["type"]:
+                            if filter_rule[0] == message["type"]:
                                 logger.debug(f"过滤器触发")
                                 # 从队列中移除匹配项,防止占用队列空间
                                 self.message_queue.queue.remove(item)
                                 filter_manager.handle_message(websocket, uid, gid, message_dict, message,
                                                               filter_name)
                                 break
-                 
 
     def plugin(self):
         while not self.stop_event.is_set():
@@ -135,7 +134,7 @@ class MessageProcess:
                 websocket, uid, nickname, gid, message_dict = item
                 if uid in config['admin'] and (message_dict["message"][0]["data"]).get(("file"), None) is not None:
                     # 查看文件加载字典中是否有这个文件对应的处理
-                    if file_manager.files.get(message_dict["message"][0]["data"]["file"], None) is not None:
+                    if file_manager.file_info.get(message_dict["message"][0]["data"]["file"], None) is not None:
                         logger.debug(f"本地文件更新触发")
                         # 从队列中移除匹配项,防止占用队列空间
                         self.message_queue.queue.remove(item)
