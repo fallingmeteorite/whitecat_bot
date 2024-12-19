@@ -12,7 +12,8 @@ uninstall_manager = None
 # 定义插件卸载器类
 class PluginUninstall:
     # 卸载插件的方法
-    def register_plugin(self, name, param1=None, param2=None, param3=None, param4=None):
+    def register_plugin(self, name, commands=None, asynchronous=None, timeout_processing=None, handler=None,
+                        filter_rule=None):
         # 将插件的名称与处理函数关联
         if hasattr(uninstall_manager, "plugin_info"):
             del uninstall_manager.plugin_info[name]
