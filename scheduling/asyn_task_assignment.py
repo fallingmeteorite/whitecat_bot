@@ -22,6 +22,8 @@ class AsynTask:
         self.scheduler_stop_event = threading.Event()
         # 定义一个字典来存储任务的详细信息
         self.task_details = {}
+        # 定义一个字典来存储任务的 asyncio.Task 对象
+        self.running_tasks = {}
 
     async def execute_task(self, task):
         """执行任务的函数"""
@@ -42,6 +44,9 @@ class AsynTask:
         except asyncio.TimeoutError:
             logger.warning(f"队列任务|{id}|超时,强制结束")
             self.task_details[id]["status"] = "timeout"
+        except asyncio.CancelledError:
+            logger.warning(f"队列任务|{id}|被强制取消")
+            self.task_details[id]["status"] = "cancelled"
         except Exception as e:
             logger.error(f"异步任务 {id} 执行失败: {e}")
             self.task_details[id]["status"] = "failed"
@@ -51,6 +56,9 @@ class AsynTask:
             if self.task_details[id]["status"] == "running":
                 self.task_details[id]["status"] = "completed"
             logger.debug(f"主动回收内存中信息：{gc.collect()}")
+            # 从运行任务字典中移除该任务
+            if id in self.running_tasks:
+                del self.running_tasks[id]
 
     def scheduler(self):
         """调度函数"""
@@ -69,7 +77,9 @@ class AsynTask:
                 task = self.task_queue.get()
 
                 # 直接将任务提交给事件循环执行
-                asyncio.run_coroutine_threadsafe(self.execute_task(task), self.loop)
+                future = asyncio.run_coroutine_threadsafe(self.execute_task(task), self.loop)
+                task_id = task[1]
+                self.running_tasks[task_id] = future
 
     def add_task(self, timeout_processing, id, func, *args, **kwargs):
         """向队列中添加任务"""
@@ -121,6 +131,15 @@ class AsynTask:
                 "task_details": self.task_details.copy()
             }
         return queue_info
+
+    def force_stop_task(self, task_id):
+        """通过任务ID强制关闭任务"""
+        if task_id in self.running_tasks:
+            future = self.running_tasks[task_id]
+            future.cancel()
+            logger.warning(f"任务 {task_id} 已被强制取消")
+        else:
+            logger.warning(f"任务 {task_id} 不存在或已完成")
 
 
 # 注册退出处理函数

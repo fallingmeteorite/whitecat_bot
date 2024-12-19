@@ -29,7 +29,7 @@ class LineTask:
 
     def execute_task(self, task):
         """执行任务的函数"""
-        id, func, args, kwargs = task
+        timeout_processing, id, func, args, kwargs = task
         logger.debug(f"开始运行线性任务,线性任务名称 {id}")
         func(*args, **kwargs)
 
@@ -67,6 +67,10 @@ class LineTask:
                 if timeout_processing:
                     # 启动一个线程来监控任务的超时
                     threading.Thread(target=self.monitor_task_timeout, args=(id, future)).start()
+
+                # 将 future 对象与任务 ID 关联
+                with self.lock:
+                    self.running_tasks[id] = future
 
     def monitor_task_timeout(self, id, future):
         """监控任务超时的函数"""
@@ -125,6 +129,17 @@ class LineTask:
                 "task_details": self.task_details.copy()
             }
         return queue_info
+
+    def force_stop_task(self, task_id):
+        """通过任务ID强制关闭任务"""
+        with self.lock:
+            if task_id in self.running_tasks:
+                future = self.running_tasks[task_id]
+                future.cancel()
+                logger.warning(f"任务 {task_id} 已被强制取消")
+                self.update_task_status(task_id, "cancelled")
+            else:
+                logger.warning(f"任务 {task_id} 不存在或已完成")
 
 
 # 注册退出处理函数
