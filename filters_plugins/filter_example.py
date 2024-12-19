@@ -1,4 +1,4 @@
-from common import send_message
+from common.message_send import send_message
 
 
 def example_filter_function(websocket, uid, gid, message_match, message_dict):
@@ -24,4 +24,5 @@ def register(filter_manager):
     filter_name = "FilterExample"
     filter_rule = "text"
     asynchronous = False,  # 如果你的插件是异步运行则改为True
-    filter_manager.register_filter(filter_name, filter_rule, asynchronous, example_filter_function)
+    timeout_processing = True,
+    filter_manager.register_filter(filter_name, filter_rule, asynchronous, timeout_processing, example_filter_function)
