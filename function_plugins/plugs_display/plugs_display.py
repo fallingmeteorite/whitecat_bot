@@ -8,7 +8,7 @@ PLUGIN_NAME = "插件展示"  # 自定义插件名称
 
 def echo(websocket, uid, nickname, gid, message_dict):
     """
-    回显输入的内容。
+    回显输入的内容，展示已加载的插件目录。
 
     :param websocket: WebSocket连接对象。
     :param uid: 用户ID。
@@ -16,11 +16,16 @@ def echo(websocket, uid, nickname, gid, message_dict):
     :param gid: 群组ID。
     :param message_dict: 消息字典，包含发送的消息。
     """
-    output = ""
-    for folder in get_directories(config["plugin_dir"]):
-        logger.debug(folder)
-        # 构造美观的输出，添加表情符号和猫猫颜文字
-        output += (f"🐱{folder}🐱(^_^)~~~\n")
+    plugin_dir = config["plugin_dir"]  # 获取插件目录，默认值为 "plugins"
+    directories = get_directories(plugin_dir)
+
+    if not directories:
+        output = "🐱 当前没有加载任何插件哦 (｡•́︿•̀｡)"
+    else:
+        output = "🐱 已加载的插件目录如下：\n"
+        for folder in directories:
+            logger.debug(f"Found plugin directory: {folder}")
+            output += f"🐱 {folder} 🐱(^_^)~~~\n"
 
     send_message(websocket, uid, gid, message=output)
 
@@ -34,8 +39,8 @@ def show_help(websocket, uid, gid):
     :param gid: 群组ID。
     """
     help_text = ("用法:\n"
-                 "系统情况 \n"
-                 "此命令会反馈服务已加载器插件")
+                 "插件列表 \n"
+                 "此命令会反馈已加载的插件目录。")
     send_message(websocket, uid, gid, message=help_text)
 
 
@@ -49,6 +54,5 @@ def register(plugin_manager):
         name=PLUGIN_NAME,
         commands=["插件列表"],
         asynchronous=False,
-        handler=lambda websocket, uid, nickname, gid, message_dict: echo(websocket, uid, nickname, gid,
-                                                                         message_dict),
+        handler=lambda websocket, uid, nickname, gid, message_dict: echo(websocket, uid, nickname, gid, message_dict),
     )
