@@ -24,8 +24,6 @@ class LineTask:
         self.condition = threading.Condition()
         # 定义一个标志来表示调度线程是否已经启动
         self.scheduler_started = False
-        # 定义任务超时时间（秒）
-        self.TASK_TIMEOUT = config["watch_dog_time"]
         # 定义一个标志来表示调度线程是否应该停止
         self.scheduler_stop_event = threading.Event()
 
@@ -51,7 +49,7 @@ class LineTask:
 
                     task = self.task_queue.get()
 
-                id, _, _, _ = task
+                timeout_processing, id, _, _, _ = task
 
                 with self.lock:
                     if id in self.running_tasks:
@@ -66,14 +64,14 @@ class LineTask:
 
                 future = executor.submit(self.execute_task, task)
                 future.add_done_callback(partial(self.task_done, id))
-
-                # 启动一个线程来监控任务的超时
-                threading.Thread(target=self.monitor_task_timeout, args=(id, future)).start()
+                if timeout_processing:
+                    # 启动一个线程来监控任务的超时
+                    threading.Thread(target=self.monitor_task_timeout, args=(id, future)).start()
 
     def monitor_task_timeout(self, id, future):
         """监控任务超时的函数"""
         try:
-            future.result(timeout=self.TASK_TIMEOUT)
+            future.result(timeout=config["watch_dog_time"])
         except TimeoutError:
             logger.warning(f"线性队列任务|{id}|超时,强制结束")
             future.cancel()
@@ -97,10 +95,10 @@ class LineTask:
                 self.task_details[id]["status"] = status
                 self.task_details[id]["end_time"] = time.time()
 
-    def add_task(self, id, func, *args, **kwargs):
+    def add_task(self, timeout_processing, id, func, *args, **kwargs):
         """向队列中添加任务"""
         if self.task_queue.qsize() <= config["maximum_queue"]:
-            self.task_queue.put((id, func, args, kwargs))
+            self.task_queue.put((timeout_processing, id, func, args, kwargs))
 
             if not self.scheduler_started:
                 self.start_scheduler()

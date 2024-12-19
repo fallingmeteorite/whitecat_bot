@@ -12,28 +12,20 @@ from common.log import logger
 class AsynTask:
     def __init__(self):
         self.loop = None
-
         # 定义一个队列来存储任务
         self.task_queue = queue.Queue()
-
         # 定义一个条件变量来控制调度线程的运行状态
         self.condition = threading.Condition()
-
         # 定义一个标志来表示调度线程是否已经启动
         self.scheduler_started = False
-
-        # 定义任务超时时间（秒）
-        self.TASK_TIMEOUT = config["watch_dog_time"]
-
         # 定义一个标志来表示调度线程是否应该停止
         self.scheduler_stop_event = threading.Event()
-
         # 定义一个字典来存储任务的详细信息
         self.task_details = {}
 
     async def execute_task(self, task):
         """执行任务的函数"""
-        id, func, args, kwargs = task
+        timeout_processing, id, func, args, kwargs = task
         logger.debug(f"开始运行异步任务,异步任务名称 {id}")
         try:
             self.task_details[id] = {
@@ -43,10 +35,10 @@ class AsynTask:
             }
 
             # 如果执行任务为定时器，不检测超时
-            if id == "timer":
-                await asyncio.wait_for(func(*args, **kwargs), timeout=None)
+            if timeout_processing:
+                await asyncio.wait_for(func(*args, **kwargs), timeout=config["watch_dog_time"])
             else:
-                await asyncio.wait_for(func(*args, **kwargs), timeout=self.TASK_TIMEOUT)
+                await asyncio.wait_for(func(*args, **kwargs), timeout=None)
         except asyncio.TimeoutError:
             logger.warning(f"队列任务|{id}|超时,强制结束")
             self.task_details[id]["status"] = "timeout"
@@ -79,10 +71,10 @@ class AsynTask:
                 # 直接将任务提交给事件循环执行
                 asyncio.run_coroutine_threadsafe(self.execute_task(task), self.loop)
 
-    def add_task(self, id, func, *args, **kwargs):
+    def add_task(self, timeout_processing, id, func, *args, **kwargs):
         """向队列中添加任务"""
         if int(self.task_queue.qsize()) <= int(config["maximum_queue"]):
-            self.task_queue.put((id, func, args, kwargs))
+            self.task_queue.put((timeout_processing, id, func, args, kwargs))
 
             # 如果调度线程还没有启动，启动它
             if not self.scheduler_started:
@@ -121,7 +113,8 @@ class AsynTask:
     def get_queue_info(self):
         """获取队列信息"""
         with self.condition:
-            running_tasks = [task_id for task_id, details in self.task_details.items() if details["status"] == "running"]
+            running_tasks = [task_id for task_id, details in self.task_details.items() if
+                             details["status"] == "running"]
             queue_info = {
                 "queue_size": self.task_queue.qsize(),
                 "running_tasks_count": len(running_tasks),
