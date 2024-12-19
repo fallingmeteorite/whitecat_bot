@@ -1,4 +1,4 @@
-from common import send_message  # 导入日志模块用于记录日志,导入发送消息的函数
+from common.message_send import send_message  # 导入日志模块用于记录日志,导入发送消息的函数
 
 PLUGIN_NAME = "测试用echo插件"  # 自定义插件名称
 
@@ -45,5 +45,6 @@ def register(plugin_manager):
         name=PLUGIN_NAME,
         commands=["echo"],
         asynchronous=False,  # 如果你的插件是异步运行则改为True
+        timeout_processing=True,
         handler=lambda websocket, uid, nickname, gid, message_dict: echo(websocket, uid, nickname, gid, message_dict),
     )
