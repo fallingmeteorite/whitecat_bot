@@ -1,6 +1,6 @@
 import json
-from common.config import config
 
+from common.config import config
 
 
 class UserUsageTracker:
