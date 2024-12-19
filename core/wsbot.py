@@ -5,9 +5,10 @@ import traceback
 import websockets
 import websockets.exceptions
 import websockets.server
+import threading
 
-from common.message_process import messageprocess
 from manager.timer_manager import timer_manager
+from common.message_process import messageprocess
 from common.config import config
 from common.log import logger
 from core.globals import glob_instance
@@ -32,8 +33,7 @@ class WebSocketManager:
         无返回值。该函数通过异步方式执行，并在连接关闭时结束。
         """
         try:
-            # 开启定时器
-            timer_manager.handle_command(glob_instance.ws, gid=config["timer_gids_list"])
+            threading.Thread(target=timer_manager.handle_command, args=(glob_instance.ws, config["timer_gids_list"])).start()
             # 主循环，持续接收并处理WebSocket消息
             while True:
                 if not self.alive:
