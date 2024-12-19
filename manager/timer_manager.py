@@ -9,25 +9,26 @@ from scheduling.thread_scheduling import add_task
 
 class TimerManager:
     def __init__(self):
-        self.tasks = []
+        self.time_tasks = []
 
     def handle_command(self, websocket, gid):
         # 全部异步处理
         asynchronous = True
         while True:
-            time.sleep(2.0)
-            if not len(self.tasks) == 0:
-                timer_name, job_func, target_time = self.tasks[0]
-                # 设置进程id为timer,防止因为超时被杀死
+            if not len(self.time_tasks) == 0:
+                timer_name, job_func, target_time = self.time_tasks[0]
+                # 防止因为超时被杀死
                 add_task(False, timer_name, job_func, asynchronous, websocket, gid, target_time)
                 logger.debug(f"TIME| 定时器:{timer_name}启动成功 |TIME")
-                del self.tasks[0]
+                del self.time_tasks[0]
+            else:
+                time.sleep(10.0)
 
     # 注册定时器的方法
     def register_plugin(self, timer_name, job_func, target_time):
         if not callable(job_func):
             raise ValueError("Handler must be a callable function.")
-        self.tasks.append((timer_name, job_func, target_time))
+        self.time_tasks.append((timer_name, job_func, target_time))
         logger.debug(f"TIME| 定时器:{timer_name}加载成功 |TIME")
 
 

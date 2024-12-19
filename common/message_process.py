@@ -7,7 +7,16 @@ from common.log import logger
 from manager.block_manager import ban_filter, ban_plugin
 from manager.file_manager import file_manager
 from manager.filter_manager import filter_manager
-from manager.plugin_manager import plugin_manager, find_plugin_by_command
+from manager.plugin_manager import plugin_manager
+from manager.system_manager import system_manager
+
+
+# 获取命令调用的插件
+def find_plugin_by_command(command, plugin_commands):
+    for info in plugin_commands.items():
+        if command in info[1][2]:
+            return info[0]
+    return None
 
 
 class MessageProcess:
@@ -34,6 +43,7 @@ class MessageProcess:
             threading.Thread(target=self.plugin, args=()).start()  # 处理插件消息
             threading.Thread(target=self.file, args=()).start()  # 处理筛选器消息
             threading.Thread(target=self.filter, args=()).start()  # 处理筛选器消息
+            threading.Thread(target=self.system, args=()).start()
             threading.Thread(target=self.monitor, args=()).start()  # 处理无用消息
 
     def unwrap_quote(self, m):
@@ -140,6 +150,45 @@ class MessageProcess:
                         self.message_queue.queue.remove(item)
                         file_manager.handle_command(websocket, uid, gid, nickname, message_dict,
                                                     message_dict["message"][0]["data"]["file"])
+                        break
+                    else:
+                        break
+                else:
+                    break
+
+    def system(self):
+        while not self.stop_event.is_set():
+            if self.message_queue.empty():
+                time.sleep(0.1)  # 队列为空时短暂休眠
+                continue
+            # 将插件加载器的判断逻辑移到这里
+            for item in list(self.message_queue.queue):
+                websocket, uid, nickname, gid, message_dict = item
+                if uid in config["admin"]:
+                    # 解析命令和参数
+                    tmp_message = ""
+                    message_list = message_dict['message']
+                    for data in message_list:
+                        if data['type'] == 'text':
+                            tmp_message = tmp_message + data['data']['text']
+                    if tmp_message == "":
+                        # 如果没有消息,跳出这次循环
+                        continue
+
+                    command, *args = tmp_message.split()
+
+                    # 通过命令查找对应的插件
+                    system_name = find_plugin_by_command(command, system_manager.system_info)
+
+                    if system_name is not None:
+                        # :param uid: 用户ID。
+                        # :param gid: 群组ID。
+                        # 对限制使用次数的群做处理,查看是否达到最大使用次数,是则不执行
+
+                        logger.debug(f"功能调用触发")
+                        # 从队列中移除匹配项,防止占用队列空间
+                        self.message_queue.queue.remove(item)
+                        system_manager.handle_command(websocket, uid, gid, nickname, message_dict, system_name)
                         break
                     else:
                         break

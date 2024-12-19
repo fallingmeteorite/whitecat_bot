@@ -7,6 +7,7 @@ filters_dir: ./filters_plugins
 file_dir: ./file_plugins
 plugin_dir: ./function_plugins
 timer_dir: ./timers_plugins
+system_dir: ./system_plugins
 
 #过滤器白名单
 valid_gids_list: []

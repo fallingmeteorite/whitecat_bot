@@ -23,7 +23,7 @@ class PluginUninstall:
         if hasattr(uninstall_manager, "filter_info"):
             del uninstall_manager.filter_info[name]
 
-        if hasattr(uninstall_manager, "tasks"):
+        if hasattr(uninstall_manager, "time_tasks"):
             asyntask.force_stop_task(name)
             linetask.force_stop_task(name)
 

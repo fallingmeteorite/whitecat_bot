@@ -8,14 +8,6 @@ from manager.user_manager import tracker
 from scheduling.thread_scheduling import add_task
 
 
-# 获取命令调用的插件
-def find_plugin_by_command(command, plugin_commands):
-    for info in plugin_commands.items():
-        if command in info[1][2]:
-            return info[0]
-    return None
-
-
 # 定义插件管理器类
 class PluginManager:
     def __init__(self):
