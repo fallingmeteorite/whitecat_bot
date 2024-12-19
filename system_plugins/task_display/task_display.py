@@ -58,8 +58,9 @@ def del_cache(websocket, uid, nickname, gid, message_dict):
     :param message_dict: 消息字典，包含发送的消息。
     """
 
-    if not uid in config["admin"]:
-        return
+    if "help" in message_dict:
+        show_help(websocket, uid, gid)
+        return None
 
     # 获取线性队列信息
     info = get_queue_info_string(linetask, linetask.task_details, max_display_time=1000, queue_type="线性")
@@ -69,6 +70,18 @@ def del_cache(websocket, uid, nickname, gid, message_dict):
 
     return send_message(websocket, uid, gid, message=info)
 
+def show_help(websocket, uid, gid):
+    """
+    显示插件的帮助信息。
+
+    :param websocket: WebSocket连接对象。
+    :param uid: 用户ID。
+    :param gid: 群组ID。
+    """
+    help_text = ("用法:\n"
+                 "进程信息 \n"
+                 "此命令会返回任务队列。")
+    send_message(websocket, uid, gid, message=help_text)
 
 def register(plugin_manager):
     """
@@ -78,7 +91,7 @@ def register(plugin_manager):
     """
     plugin_manager.register_plugin(
         name=PLUGIN_NAME,
-        commands=["进程信息"],
+        commands=["/进程信息"],
         asynchronous=False,
         timeout_processing=True,
         handler=lambda websocket, uid, nickname, gid, message_dict: del_cache(websocket, uid, nickname, gid,
