@@ -4,7 +4,7 @@ websocket_port: 7740
 
 #插件地址
 filters_dir: ./filters_plugins
-file_dir: ./file_plugins
+file_dir: ./papers_plugins
 plugin_dir: ./function_plugins
 timer_dir: ./timers_plugins
 system_dir: ./system_plugins
