@@ -27,7 +27,7 @@ def send_message(websocket, uid, gid, **kwargs):
     caller_file = caller_frame[1]
     caller_line = caller_frame[2]
     caller_function = caller_frame[3]
-    logger.info(f"检测到文件:{caller_file}的第{caller_line}行的{caller_function}函数发送了消息")
+    logger.info(f"文件:{caller_file}的第{caller_line}行的{caller_function}函数发送了消息")
 
     msg = {
         "action": "send_private_msg" if gid is None else "send_group_msg",
@@ -66,7 +66,7 @@ def send_action(websocket, uid, gid, action, **kwargs):
     caller_file = caller_frame[1]
     caller_line = caller_frame[2]
     caller_function = caller_frame[3]
-    logger.info(f"检测到文件:{caller_file}的第{caller_line}行的{caller_function}函数发送了消息")
+    logger.info(f"文件:{caller_file}的第{caller_line}行的{caller_function}函数发送了消息")
 
     msg = {
         "action": action,
