@@ -28,9 +28,6 @@ class AsynTask:
         # 定义一个标志来表示调度线程是否应该停止
         self.scheduler_stop_event = threading.Event()
 
-        # 定义一个字典去展示进程信息
-        self.asyn_processes_list = []
-
         # 定义一个字典来存储任务的详细信息
         self.task_details = {}
 
@@ -39,7 +36,6 @@ class AsynTask:
         id, func, args, kwargs = task
         logger.debug(f"开始运行异步任务,异步任务名称 {id}")
         try:
-            self.asyn_processes_list.append(id)
             self.task_details[id] = {
                 "start_time": time.monotonic(),
                 "status": "running",
@@ -58,9 +54,10 @@ class AsynTask:
             logger.error(f"异步任务 {id} 执行失败: {e}")
             self.task_details[id]["status"] = "failed"
         finally:
-            self.asyn_processes_list.remove(id)
             self.task_details[id]["end_time"] = time.monotonic()
-            self.task_details[id]["status"] = "completed"
+            # 如果任务状态为 "running"，则将其设置为 "completed"
+            if self.task_details[id]["status"] == "running":
+                self.task_details[id]["status"] = "completed"
             logger.debug(f"主动回收内存中信息：{gc.collect()}")
 
     def scheduler(self):
@@ -124,9 +121,10 @@ class AsynTask:
     def get_queue_info(self):
         """获取队列信息"""
         with self.condition:
+            running_tasks = [task_id for task_id, details in self.task_details.items() if details["status"] == "running"]
             queue_info = {
                 "queue_size": self.task_queue.qsize(),
-                "running_tasks_count": len(self.asyn_processes_list),
+                "running_tasks_count": len(running_tasks),
                 "task_details": self.task_details.copy()
             }
         return queue_info
