@@ -21,6 +21,8 @@ async def file_set(websocket, uid, nickname, gid, file_url):
             if data.get('status', None) == 'ok' and data['data'].get('url', None) is not None:
                 file_url = data['data']['url'] + "pretags.json"
 
+                return None
+
 
 def register(file_manager):
     """
