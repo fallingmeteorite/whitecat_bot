@@ -1,7 +1,8 @@
 import os
-from common.message_send import send_message
+
 from common.config import config
 from common.log import logger
+from common.message_send import send_message
 
 PLUGIN_NAME = "缓存删除"  # 自定义插件名称
 
@@ -101,5 +102,6 @@ def register(plugin_manager):
         commands=["/del_cache"],
         asynchronous=False,
         timeout_processing=True,
-        handler=lambda websocket, uid, nickname, gid, message_dict: del_cache(websocket, uid, nickname, gid, message_dict),
+        handler=lambda websocket, uid, nickname, gid, message_dict: del_cache(websocket, uid, nickname, gid,
+                                                                              message_dict),
     )

@@ -1,4 +1,5 @@
 import psutil
+
 from common.message_send import send_message  # 导入发送消息的函数
 
 PLUGIN_NAME = "内存查询"  # 自定义插件名称
@@ -8,14 +9,14 @@ def get_memory_usage():
     """获取内存使用情况并返回格式化字符串"""
     mem = psutil.virtual_memory()
     return (
-        "=" * 20 + "\n" +
-        "内存使用情况:\n" +
-        "=" * 20 + "\n" +
-        f"总内存:         {mem.total / (1024 ** 3):.2f} GB\n" +
-        f"可用内存:       {mem.available / (1024 ** 3):.2f} GB\n" +
-        f"已用内存:       {mem.used / (1024 ** 3):.2f} GB\n" +
-        f"内存使用百分比:  {mem.percent} %\n" +
-        "=" * 20 + "\n"
+            "=" * 20 + "\n" +
+            "内存使用情况:\n" +
+            "=" * 20 + "\n" +
+            f"总内存:         {mem.total / (1024 ** 3):.2f} GB\n" +
+            f"可用内存:       {mem.available / (1024 ** 3):.2f} GB\n" +
+            f"已用内存:       {mem.used / (1024 ** 3):.2f} GB\n" +
+            f"内存使用百分比:  {mem.percent} %\n" +
+            "=" * 20 + "\n"
     )
 
 

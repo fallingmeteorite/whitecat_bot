@@ -1,11 +1,11 @@
 import time
 
-from common.config import config
 from common.message_send import send_message
 from scheduling.asyn_task_assignment import asyntask
 from scheduling.line_task_assignment import linetask
 
 PLUGIN_NAME = "任务显示"  # 自定义插件名称
+
 
 def format_task_info(task_id, details, max_display_time):
     """格式化任务信息"""
@@ -36,16 +36,19 @@ def format_task_info(task_id, details, max_display_time):
 
     return f"ID: {task_id}, 进程状态: {status}{status_hint}, 已运行时间: {elapsed_time_display} 秒\n"
 
+
 def get_queue_info_string(task_queue, task_details, max_display_time, queue_type):
     """获取队列信息的字符串"""
     info = ""
     queue_info = task_queue.get_queue_info()
-    info += (f"{queue_type}队列数量: {queue_info['queue_size']}, 正在运行的任务数量: {queue_info['running_tasks_count']}\n")
+    info += (
+        f"{queue_type}队列数量: {queue_info['queue_size']}, 正在运行的任务数量: {queue_info['running_tasks_count']}\n")
 
     for task_id, details in queue_info['task_details'].items():
         info += format_task_info(task_id, details, max_display_time)
 
     return info
+
 
 def del_cache(websocket, uid, nickname, gid, message_dict):
     """
@@ -70,6 +73,7 @@ def del_cache(websocket, uid, nickname, gid, message_dict):
 
     return send_message(websocket, uid, gid, message=info)
 
+
 def show_help(websocket, uid, gid):
     """
     显示插件的帮助信息。
@@ -82,6 +86,7 @@ def show_help(websocket, uid, gid):
                  "进程信息 \n"
                  "此命令会返回任务队列。")
     send_message(websocket, uid, gid, message=help_text)
+
 
 def register(plugin_manager):
     """

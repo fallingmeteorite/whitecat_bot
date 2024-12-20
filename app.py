@@ -2,11 +2,12 @@ import datetime
 import time
 
 from common.log import logger
-from core.wsbot import ws_manager
-from core.backend import app
-from scheduling.line_task_assignment import linetask
-from scheduling.asyn_task_assignment import asyntask
 from common.message_process import messageprocess
+from core.backend import app
+from core.wsbot import ws_manager
+from scheduling.asyn_task_assignment import asyntask
+from scheduling.line_task_assignment import linetask
+
 
 def main():
     start_time = datetime.datetime.now()
@@ -23,7 +24,6 @@ def main():
     fastapi_thread = app.create_job()
     fastapi_thread.start()
 
-
     # 等待键盘中断
     try:
         while True:
@@ -36,9 +36,9 @@ def main():
         ws_manager.alive = False
 
         # TODO 这里应该检查是否所有任务都已完成（如图像生成等）
-        messageprocess.stop()# 停止消息接收
-        linetask.stop_scheduler()# 停止调度线程
-        asyntask.stop_scheduler()# 停止调度线程
+        messageprocess.stop()  # 停止消息接收
+        linetask.stop_scheduler()  # 停止调度线程
+        asyntask.stop_scheduler()  # 停止调度线程
         ws_thread.join(timeout=2)  # 等待WebSocket服务器线程结束，超时5秒
         fastapi_thread.join(timeout=2)  # 等待FastAPI应用线程结束，超时5秒
         logger.info("已停止")
