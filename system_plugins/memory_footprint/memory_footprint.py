@@ -2,7 +2,7 @@ import psutil
 
 from common.message_send import send_message  # 导入发送消息的函数
 
-PLUGIN_NAME = "内存查询"  # 自定义插件名称
+PLUGIN_NAME = "内存和CPU查询"  # 自定义插件名称
 
 
 def get_memory_usage():
@@ -36,9 +36,35 @@ def get_top_memory_processes(limit=5):
     return proc_info
 
 
+def get_cpu_usage():
+    """获取CPU使用情况并返回格式化字符串"""
+    cpu_percent = psutil.cpu_percent(interval=1)
+    return (
+            "=" * 20 + "\n" +
+            f"总CPU使用百分比:  {cpu_percent} %\n" +
+            "=" * 20 + "\n"
+    )
+
+
+def get_top_cpu_processes(limit=5):
+    """获取CPU使用最多的前几个进程并返回格式化字符串"""
+    top_cpu = sorted(
+        (p for p in psutil.process_iter(['pid', 'name', 'cpu_percent']) if p.info['cpu_percent'] is not None),
+        key=lambda p: p.info['cpu_percent'], reverse=True
+    )[:limit]
+
+    proc_info = f"CPU使用最多的前{limit}个进程:\n"
+    for proc in top_cpu:
+        proc_info += (
+            f"PID: {proc.info['pid']} | 名称: {proc.info['name']} | "
+            f"CPU使用: {proc.info['cpu_percent']:.2f}%\n"
+        )
+    return proc_info
+
+
 def echo(websocket, uid, nickname, gid, message_dict):
     """
-    回显输入的内容并发送内存使用情况。
+    回显输入的内容并发送内存和CPU使用情况。
 
     :param websocket: WebSocket连接对象。
     :param uid: 用户ID。
@@ -53,8 +79,11 @@ def echo(websocket, uid, nickname, gid, message_dict):
         return
 
     memory_usage = get_memory_usage()
-    top_procs = get_top_memory_processes(5)
-    output = memory_usage + top_procs
+    top_mem_procs = get_top_memory_processes(5)
+    cpu_usage = get_cpu_usage()
+    top_cpu_procs = get_top_cpu_processes(5)
+
+    output = memory_usage + top_mem_procs + cpu_usage + top_cpu_procs
 
     send_message(websocket, uid, gid, message=output)
 
@@ -69,7 +98,7 @@ def show_help(websocket, uid, gid):
     """
     help_text = ("用法:\n"
                  "系统情况 \n"
-                 "此命令会反馈服务器内存占用情况。")
+                 "此命令会反馈服务器内存和CPU信息。")
     send_message(websocket, uid, gid, message=help_text)
 
 
@@ -81,7 +110,7 @@ def register(plugin_manager):
     """
     plugin_manager.register_plugin(
         name=PLUGIN_NAME,
-        commands=["/内存情况"],
+        commands=["/系统情况"],
         asynchronous=False,
         timeout_processing=True,
         handler=lambda websocket, uid, nickname, gid, message_dict: echo(websocket, uid, nickname, gid, message_dict),
