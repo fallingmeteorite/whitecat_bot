@@ -5,12 +5,10 @@ import traceback
 import websockets
 import websockets.exceptions
 import websockets.server
-import threading
 
-from manager.timer_manager import timer_manager
-from common.message_process import messageprocess
 from common.config import config
 from common.log import logger
+from common.message_process import messageprocess
 from core.globals import glob_instance
 from utils.Job import Job
 
@@ -33,25 +31,23 @@ class WebSocketManager:
         无返回值。该函数通过异步方式执行，并在连接关闭时结束。
         """
         try:
-            threading.Thread(target=timer_manager.handle_command, args=(glob_instance.ws, config["timer_gids_list"])).start()
             # 主循环，持续接收并处理WebSocket消息
             while True:
                 if not self.alive:
                     logger.debug("收到进程结束通知，WS已关闭")
                     return
-
-                # 记录接收到的服务器数据日志
+                # 检查是否暂停消息处理
                 message = json.loads(await glob_instance.ws.recv())
                 messageprocess.add_message(glob_instance.ws, message)
 
         # 捕获WebSocket连接关闭异常
         except websockets.exceptions.ConnectionClosedError as error:
             logger.error(f"WebSocket连接关闭异常: {error}")
-            # 捕获其他所有异常
+        # 捕获其他所有异常
         except Exception as error:
             logger.error(f"发生错误: {error}")
             print(traceback.format_exc())
-            # 确保在函数结束前关闭WebSocket连接
+        # 确保在函数结束前关闭WebSocket连接
         finally:
             await glob_instance.ws.close()
             glob_instance.ws = None
@@ -107,17 +103,17 @@ class WebSocketManager:
                 logger.error("多次尝试后无法连接到 WebSocket 服务器.")
                 continue_connecting = False
 
-    def run_websocket_server(self):
-        if self.alive:
-            return
-        self.alive = True
-        asyncio.run(self.start_websocket_server())
-
     def create_job(self):
         # 创建并运行WebSocket服务器线程
         ws_thread = Job(target=self.run_websocket_server)
         ws_thread.daemon = True  # 设置线程为守护线程，以便在主程序停止时自动关闭
         return ws_thread
+
+    def run_websocket_server(self):
+        if self.alive:
+            return
+        self.alive = True
+        asyncio.run(self.start_websocket_server())
 
 
 ws_manager = WebSocketManager()

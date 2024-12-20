@@ -1,36 +1,31 @@
 from typing import Optional
-
 from websockets import WebSocketClientProtocol
-
-
-class PointerObj:
-    def __init__(self, s, k: str):
-        self.s = s
-        self.k = k
-
-    def __getattr__(self, item):
-        if item in ['s', 'k']:
-            return getattr(self, item)
-        return getattr(getattr(self.s, self.k), item)
-
-    def __setattr__(self, key, value):
-        if key in ['s', 'k']:
-            return super().__setattr__(key, value)
-        return setattr(getattr(self.s, self.k), key, value)
 
 
 class _Globals:
     def __init__(self):
         self._glob_ws: Optional[WebSocketClientProtocol] = None
-        self._glob_ws_ptr = PointerObj(self, "_glob_ws")
 
     @property
-    def ws(self):
-        return self._glob_ws_ptr
+    def ws(self) -> Optional[WebSocketClientProtocol]:
+        """
+        获取当前的 WebSocket 连接对象。
+
+        返回:
+        - Optional[WebSocketClientProtocol]: WebSocket 连接对象，如果未设置则为 None。
+        """
+        return self._glob_ws
 
     @ws.setter
     def ws(self, ws: WebSocketClientProtocol):
+        """
+        设置当前的 WebSocket 连接对象。
+
+        参数:
+        - ws (WebSocketClientProtocol): 要设置的 WebSocket 连接对象。
+        """
         self._glob_ws = ws
 
 
+# 全局实例
 glob_instance = _Globals()
