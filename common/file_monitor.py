@@ -89,4 +89,4 @@ async def start_monitoring(path_to_watch, load_module, manager):
     observer.schedule(event_handler, path=path_to_watch, recursive=True)
 
     observer.start()
-    logger.debug(f"文件监测已经开启,监测目录{path_to_watch}")
+    logger.debug(f"文件夹监测已经开启,监测文件夹目录{path_to_watch}")

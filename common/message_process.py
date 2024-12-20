@@ -47,8 +47,7 @@ class MessageProcess:
             threading.Thread(target=self.filter, args=()).start()  # 处理筛选器消息
             threading.Thread(target=self.system, args=()).start()  # 系统插件处理器
             threading.Thread(target=self.monitor, args=()).start()  # 处理无用消息
-            threading.Thread(target=timer_manager.handle_command,
-                             args=(glob_instance.ws, config["timer_gids_list"])).start()
+            threading.Thread(target=timer_manager.handle_command, args=(glob_instance.ws, config["timer_gids_list"])).start() #启动定时器
 
     def unwrap_quote(self, m):
         return m.replace("&", "&").replace("[", "[").replace("]", "]").replace(",", ",")
@@ -148,27 +147,19 @@ class MessageProcess:
 
     # 处理无效消息
     def monitor(self):
-        while not self.stop_event.is_set():
-            if self.message_queue.empty():
-                time.sleep(0.5)
-                continue
-
-            # 获取队列中的第一个消息
-            first_message = self.message_queue.queue[0]
-            start_time = time.time()
-
-            # 等待1秒
-            while time.time() - start_time < 1:
-                time.sleep(0.1)
-
-                # 检查队列的第一个消息是否发生变化
-                if self.message_queue.queue[0] != first_message:
-                    break
+        def monitor_handler(item):
+            time.sleep(0.2)
+            try:
+                if self.message_queue.queue[0] != item:
+                    return False  # 如果消息发生变化，则不处理
+            except IndexError:
+                return False
 
             # 如果1秒后消息没有变化，则删除它
-            if self.message_queue.queue[0] == first_message:
-                removed_message = self.message_queue.get()
-                logger.debug(f"监测到无用信息,已经从信息队列中删除: {removed_message}")
+            logger.debug(f"监测到无用信息,已经从信息队列中删除: {item}")
+            return True
+
+        self.process_queue(monitor_handler)
 
     # 结束多线程任务
     def stop(self):

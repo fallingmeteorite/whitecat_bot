@@ -14,16 +14,17 @@ class PluginUninstall:
     # 卸载插件的方法
     def register_plugin(self, name, commands=None, asynchronous=None, timeout_processing=None, handler=None,
                         filter_rule=None):
-        # 将插件的名称与处理函数关联
+        logger.debug("正在卸载已加载插件信息和命令")
+        # 判断要卸载的是什么插件
         if hasattr(uninstall_manager, "plugin_info"):
             del uninstall_manager.plugin_info[name]
-
+        # 判断要卸载的是什么插件
         if hasattr(uninstall_manager, "file_info"):
             del uninstall_manager.file_info[name]
-
+        # 判断要卸载的是什么插件
         if hasattr(uninstall_manager, "filter_info"):
             del uninstall_manager.filter_info[name]
-
+        # 先结束定时器任务
         if hasattr(uninstall_manager, "time_tasks"):
             asyntask.force_stop_task(name)
             linetask.force_stop_task(name)
@@ -52,7 +53,7 @@ def load(load_dir, Install):
             if hasattr(module, 'register'):
                 module.register(manager)
         except Exception as error:
-            logger.error(f"加载失败,也许你的插件存在错误,加载错误信息: {error}")
+            logger.error(f"插件加载失败,也许你的插件存在错误,加载错误信息: {error}")
     return manager, load_module
 
 
@@ -80,8 +81,6 @@ def reload(path_to_watch, original_folder, reload_enable, target_folder, observe
                 del load_module[original_folder]
 
             if reload_enable:
-                logger.debug("开始加载插件")
-                # 重新加载插件
                 # 从文件位置导入插件模块
                 spec = importlib.util.spec_from_file_location(original_folder,
                                                               f"{path_to_watch}/{original_folder}/{original_folder}.py")
@@ -93,8 +92,6 @@ def reload(path_to_watch, original_folder, reload_enable, target_folder, observe
                 # 检查并注册插件
                 if hasattr(module, 'register'):
                     module.register(install)
-
-                logger.debug("插件加载完成")
 
         # 是插件文件夹改名操作
         if target_folder is not None:
@@ -109,8 +106,6 @@ def reload(path_to_watch, original_folder, reload_enable, target_folder, observe
             del load_module[original_folder]
 
             if reload_enable:
-                logger.debug("开始加载插件")
-                # 重新加载插件
                 # 从文件位置导入插件模块
                 spec = importlib.util.spec_from_file_location(target_folder,
                                                               f"{path_to_watch}/{target_folder}/{target_folder}.py")
@@ -121,12 +116,10 @@ def reload(path_to_watch, original_folder, reload_enable, target_folder, observe
                 # 检查并注册插件
                 if hasattr(module, 'register'):
                     module.register(install)
-                logger.debug("插件加载完成")
     except Exception as error:
         logger.error(f"插件加载出现问题,请确认插件是否存在错误,报错信息: {error}")
     finally:
         logger.debug(f"主动回收内存中信息：{gc.collect()}")
-
         # 启动插件文件夹监视
         logger.debug("插件加载完毕,观察者已经开启,可以修改插件文件夹")
         asyncio.run(start_monitoring(path_to_watch, load_module, install))
