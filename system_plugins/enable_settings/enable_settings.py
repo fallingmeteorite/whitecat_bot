@@ -82,8 +82,8 @@ def show_help(websocket, uid, gid):
     """
     help_text = ("用法:\n"
                  "类型: 定时器,功能,过滤器,文件接收\n"
-                 "禁用 <类型,插件文件夹名字> \n"
-                 "启用 <类型,插件文件夹名字> \n"
+                 "禁用 <类型>-插件文件夹名字-  \n"
+                 "启用 <类型>-插件文件夹名字-  \n"
                  "此命令会移动插件。")
     send_message(websocket, uid, gid, message=help_text)
 
