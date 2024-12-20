@@ -16,6 +16,7 @@ from utils.Job import Job
 class WebSocketManager:
     def __init__(self):
         self.alive = False
+        self.pause_message_processing = True # 用于控制是否暂停消息处理
 
     async def handle_websocket(self, client_id):
         """
@@ -37,8 +38,11 @@ class WebSocketManager:
                     logger.debug("收到进程结束通知，WS已关闭")
                     return
                 # 检查是否暂停消息处理
-                message = json.loads(await glob_instance.ws.recv())
-                messageprocess.add_message(glob_instance.ws, message)
+                if self.pause_message_processing:
+                    message = json.loads(await glob_instance.ws.recv())
+                    messageprocess.add_message(glob_instance.ws, message)
+                else:
+                    await asyncio.sleep(1)  # 如果暂停，则等待1秒后再检查
 
         # 捕获WebSocket连接关闭异常
         except websockets.exceptions.ConnectionClosedError as error:

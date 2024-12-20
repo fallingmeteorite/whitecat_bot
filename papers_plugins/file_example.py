@@ -1,4 +1,5 @@
 import json
+import logging
 import time
 
 import websockets
@@ -7,21 +8,29 @@ from common.config import config
 
 
 async def file_set(websocket, uid, nickname, gid, file_url):
-    async with websockets.connect(f"{str(config['websocket_uri'])}:{str(config['websocket_port'])}") as websocket:
-        msg = {
-            "action": "get_group_file_url",
-            "params": {
-                'group_id': gid,
-                "file_id": file_url,
-            }}
-        await websocket.send(json.dumps(msg))
-        while True:
-            data = json.loads(await websocket.recv())
-            time.sleep(1.0)
-            if data.get('status', None) == 'ok' and data['data'].get('url', None) is not None:
-                file_url = data['data']['url'] + "pretags.json"
+    from core.wsbot import ws_manager
+    ws_manager.pause_message_processing = False
+    try:
+        async with websockets.connect(f"{str(config['websocket_uri'])}:{str(config['websocket_port'])}") as websocket:
+            msg = {
+                "action": "get_group_file_url",
+                "params": {
+                    'group_id': gid,
+                    "file_id": file_url,
+                }}
+            await websocket.send(json.dumps(msg))
+            while True:
+                data = json.loads(await websocket.recv())
+                time.sleep(1.0)
+                if data.get('status', None) == 'ok' and data['data'].get('url', None) is not None:
+                    file_url = data['data']['url'] + "pretags.json"
+                    break
+    except Exception as error:
+        logging.error(error)
 
-                return None
+
+    finally:
+        ws_manager.pause_message_processing = True
 
 
 def register(file_manager):
