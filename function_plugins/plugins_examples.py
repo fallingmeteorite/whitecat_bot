@@ -15,7 +15,7 @@ def echo(websocket, uid, nickname, gid, message_dict):
     """
     message_send = message_dict["raw_message"]
 
-    if "help" in message_send[:10]:
+    if "help" in message_send:
         show_help(websocket, uid, gid)
         return
 
