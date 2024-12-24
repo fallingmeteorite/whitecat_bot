@@ -96,7 +96,7 @@ def register(plugin_manager):
     """
     plugin_manager.register_plugin(
         name=PLUGIN_NAME,
-        commands=["/插件修改"],
+        commands=["插件修改"],
         asynchronous=False,
         timeout_processing=True,
         handler=lambda websocket, uid, nickname, gid, message_dict: enable_set(websocket, uid, nickname, gid,

@@ -52,7 +52,7 @@ def register(plugin_manager):
     """
     plugin_manager.register_plugin(
         name=PLUGIN_NAME,
-        commands=["/插件列表"],
+        commands=["插件列表"],
         asynchronous=False,
         timeout_processing=True,
         handler=lambda websocket, uid, nickname, gid, message_dict: echo(websocket, uid, nickname, gid, message_dict),

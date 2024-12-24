@@ -37,15 +37,23 @@ def format_task_info(task_id, details, max_display_time):
     return f"ID: {task_id}, 进程状态: {status}{status_hint}, 已运行时间: {elapsed_time_display} 秒\n"
 
 
-def get_queue_info_string(task_queue, task_details, max_display_time, queue_type):
+def get_queue_info_string(task_queue, max_display_time, queue_type):
     """获取队列信息的字符串"""
     info = ""
     queue_info = task_queue.get_queue_info()
     info += (
-        f"{queue_type}队列数量: {queue_info['queue_size']}, 正在运行的任务数量: {queue_info['running_tasks_count']}\n")
+        f"\n{queue_type}队列数量: {queue_info['queue_size']}, 正在运行的任务数量: {queue_info['running_tasks_count']}\n")
 
+    # 输出任务详细信息
     for task_id, details in queue_info['task_details'].items():
         info += format_task_info(task_id, details, max_display_time)
+
+        # 输出错误日志
+    if queue_info.get("error_logs"):
+        info += f"\n{queue_type}错误日志:\n"
+        for error in queue_info["error_logs"]:
+            info += (
+                f"任务ID: {error['task_id']}, 报错时间: {error['error_time']}, 错误信息: {error['error_message']}\n")
 
     return info
 
@@ -66,10 +74,10 @@ def del_cache(websocket, uid, nickname, gid, message_dict):
         return None
 
     # 获取线性队列信息
-    info = get_queue_info_string(linetask, linetask.task_details, max_display_time=1000, queue_type="线性")
+    info = get_queue_info_string(linetask, max_display_time=1000, queue_type="线性")
 
     # 获取异步队列信息
-    info += get_queue_info_string(asyntask, asyntask.task_details, max_display_time=1000, queue_type="异步")
+    info += get_queue_info_string(asyntask, max_display_time=1000, queue_type="异步")
 
     return send_message(websocket, uid, gid, message=info)
 
@@ -96,7 +104,7 @@ def register(plugin_manager):
     """
     plugin_manager.register_plugin(
         name=PLUGIN_NAME,
-        commands=["/进程信息"],
+        commands=["进程信息"],
         asynchronous=False,
         timeout_processing=True,
         handler=lambda websocket, uid, nickname, gid, message_dict: del_cache(websocket, uid, nickname, gid,
