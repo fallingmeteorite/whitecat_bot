@@ -26,6 +26,8 @@ class LineTask:
         self.scheduler_started = False
         # 定义一个标志来表示调度线程是否应该停止
         self.scheduler_stop_event = threading.Event()
+        # 定义一个列表来存储最近的报错信息，最多保留 10 条
+        self.error_logs = []
 
     def execute_task(self, task):
         """执行任务的函数"""
@@ -90,6 +92,7 @@ class LineTask:
         except Exception as e:
             logger.error(f"线性任务 {id} 执行失败: {e}")
             self.update_task_status(id, "failed")
+            self.log_error(id, e)
 
     def update_task_status(self, id, status):
         """更新任务状态的函数"""
@@ -98,6 +101,19 @@ class LineTask:
                 del self.running_tasks[id]
                 self.task_details[id]["status"] = status
                 self.task_details[id]["end_time"] = time.time()
+
+    def log_error(self, id, exception):
+        """记录错误信息"""
+        error_info = {
+            "task_id": id,
+            "error_time": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
+            "error_message": str(exception)
+        }
+        with self.lock:
+            self.error_logs.append(error_info)
+            # 如果错误日志超过 10 条，移除最早的一条
+            if len(self.error_logs) > 10:
+                self.error_logs.pop(0)
 
     def add_task(self, timeout_processing, id, func, *args, **kwargs):
         """向队列中添加任务"""
@@ -126,7 +142,8 @@ class LineTask:
             queue_info = {
                 "queue_size": self.task_queue.qsize(),
                 "running_tasks_count": len(self.running_tasks),
-                "task_details": self.task_details.copy()
+                "task_details": self.task_details.copy(),
+                "error_logs": self.error_logs.copy()  # 返回最近的错误日志
             }
         return queue_info
 

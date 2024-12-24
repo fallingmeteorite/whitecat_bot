@@ -24,6 +24,8 @@ class AsynTask:
         self.task_details = {}
         # 定义一个字典来存储任务的 asyncio.Task 对象
         self.running_tasks = {}
+        # 定义一个列表来存储最近的报错信息，最多保留 10 条
+        self.error_logs = []
 
     async def execute_task(self, task):
         """执行任务的函数"""
@@ -50,6 +52,7 @@ class AsynTask:
         except Exception as e:
             logger.error(f"异步任务 {id} 执行失败: {e}")
             self.task_details[id]["status"] = "failed"
+            self.log_error(id, e)
         finally:
             self.task_details[id]["end_time"] = time.monotonic()
             # 如果任务状态为 "running"，则将其设置为 "completed"
@@ -125,10 +128,14 @@ class AsynTask:
         with self.condition:
             running_tasks = [task_id for task_id, details in self.task_details.items() if
                              details["status"] == "running"]
+            failed_tasks = [task_id for task_id, details in self.task_details.items() if
+                            details["status"] == "failed"]
             queue_info = {
                 "queue_size": self.task_queue.qsize(),
                 "running_tasks_count": len(running_tasks),
-                "task_details": self.task_details.copy()
+                "failed_tasks_count": len(failed_tasks),
+                "task_details": self.task_details.copy(),
+                "error_logs": self.error_logs.copy()  # 返回最近的错误日志
             }
         return queue_info
 
@@ -140,6 +147,19 @@ class AsynTask:
             logger.warning(f"任务 {task_id} 已被强制取消")
         else:
             logger.warning(f"任务 {task_id} 不存在或已完成")
+
+    def log_error(self, id, exception):
+        """记录错误信息"""
+        error_info = {
+            "task_id": id,
+            "error_time": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
+            "error_message": str(exception)
+        }
+        with self.condition:
+            self.error_logs.append(error_info)
+            # 如果错误日志超过 10 条，移除最早的一条
+            if len(self.error_logs) > 10:
+                self.error_logs.pop(0)
 
 
 # 注册退出处理函数
