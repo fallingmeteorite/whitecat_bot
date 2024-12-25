@@ -1,3 +1,4 @@
+import os
 import queue
 import threading
 import time
@@ -29,6 +30,7 @@ class MessageProcess:
         self.lock = False
         # 当主程序的关闭时,用于关闭消息处理线程
         self.stop_event = threading.Event()  # 用于控制线程停止的事件
+        self.pause_message_processing = True  # 用于控制是否暂停消息处理
 
     # 添加消息到队列中
     def add_message(self, websocket, message):
@@ -42,12 +44,13 @@ class MessageProcess:
             self.lock = True
             # 开启消息处理线程
             # 不设置守护线程,因为任务调度也在这个线程下面
-            threading.Thread(target=self.plugin, args=()).start()  # 处理插件消息
-            threading.Thread(target=self.file, args=()).start()  # 处理筛选器消息
-            threading.Thread(target=self.filter, args=()).start()  # 处理筛选器消息
-            threading.Thread(target=self.system, args=()).start()  # 系统插件处理器
-            threading.Thread(target=self.monitor, args=()).start()  # 处理无用消息
-            threading.Thread(target=timer_manager.handle_command, args=(glob_instance.ws, config["timer_gids_list"])).start() #启动定时器
+            threading.Thread(target=self.plugin, args=(), daemon=True).start()  # 处理插件消息
+            threading.Thread(target=self.file, args=(), daemon=True).start()  # 处理筛选器消息
+            threading.Thread(target=self.filter, args=(), daemon=True).start()  # 处理筛选器消息
+            threading.Thread(target=self.system, args=(), daemon=True).start()  # 系统插件处理器
+            threading.Thread(target=self.monitor, args=(), daemon=True).start()  # 处理无用消息
+            threading.Thread(target=timer_manager.handle_command,
+                             args=(glob_instance.ws, config["timer_gids_list"]), daemon=True).start()  # 启动定时器
 
     def unwrap_quote(self, m):
         return m.replace("&", "&").replace("[", "[").replace("]", "]").replace(",", ",")
@@ -79,8 +82,12 @@ class MessageProcess:
                 continue
             for item in list(self.message_queue.queue):
                 if handler(item, *args):
-                    self.message_queue.queue.remove(item)
-                    break
+                    try:
+                        self.message_queue.queue.remove(item)
+                        break
+                    except:
+                        logger.debug("该队列信息不存在或已被移除")
+                        break
 
     def filter(self):
         def filter_handler(item):
@@ -94,7 +101,8 @@ class MessageProcess:
                             return True
             return False
 
-        self.process_queue(filter_handler)
+        if self.pause_message_processing:
+            self.process_queue(filter_handler)
 
     def plugin(self):
         def plugin_handler(item):
@@ -111,7 +119,8 @@ class MessageProcess:
                 return True
             return False
 
-        self.process_queue(plugin_handler)
+        if self.pause_message_processing:
+            self.process_queue(plugin_handler)
 
     def file(self):
         def file_handler(item):
@@ -124,7 +133,8 @@ class MessageProcess:
                     return True
             return False
 
-        self.process_queue(file_handler)
+        if self.pause_message_processing:
+            self.process_queue(file_handler)
 
     def system(self):
         def system_handler(item):
@@ -167,6 +177,3 @@ class MessageProcess:
 
 
 messageprocess = MessageProcess()
-
-# 主程序结束时调用 stop 方法
-# messageprocess.stop()

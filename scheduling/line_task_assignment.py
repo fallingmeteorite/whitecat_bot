@@ -132,6 +132,7 @@ class LineTask:
         scheduler_thread.start()
 
     def stop_scheduler(self):
+        logger.warning("退出清理")
         self.scheduler_stop_event.set()
         with self.condition:
             self.condition.notify_all()

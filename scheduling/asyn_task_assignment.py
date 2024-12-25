@@ -113,10 +113,10 @@ class AsynTask:
         self.loop.run_forever()
 
     def stop_scheduler(self):
+        logger.warning("退出清理")
         self.scheduler_stop_event.set()
         with self.condition:
             self.condition.notify_all()
-
         # 停止事件循环,(防止时间循环还没开启就结束会引发报错)
         try:
             self.loop.call_soon_threadsafe(self.loop.stop)

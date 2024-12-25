@@ -7,7 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from starlette.middleware.cors import CORSMiddleware
 
 from common.log import logger
-from utils.Job import Job
+from utils.thread_creation import ThreadController
 
 
 class Backend(FastAPI):
@@ -38,8 +38,7 @@ class Backend(FastAPI):
         uvicorn.run(self, host=host, port=port, log_level="info")
 
     def create_job(self):
-        fastapi_thread = Job(target=self.run_fastapi_app)
-        fastapi_thread.daemon = True  # 设置线程为守护线程，以便在主程序停止时自动关闭
+        fastapi_thread = ThreadController(self.run_fastapi_app, "backend")
         return fastapi_thread
 
 

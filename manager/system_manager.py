@@ -11,7 +11,7 @@ class SystemManager:
         self.system_info = {}
 
     # 注册插件的方法
-    def register_plugin(self, name, asynchronous, timeout_processing, commands, handler):
+    def register_system(self, name, asynchronous, timeout_processing, commands, handler):
         # 将插件的名称与处理函数关联
         if not callable(handler):
             raise ValueError("Handler must be a callable function.")

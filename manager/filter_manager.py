@@ -5,7 +5,6 @@ from common.log import logger
 from common.module_load import load
 from scheduling.thread_scheduling import add_task
 
-
 class FilterManager:
     def __init__(self):
         self.filter_info = {}

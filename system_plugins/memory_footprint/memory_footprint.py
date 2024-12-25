@@ -108,7 +108,7 @@ def register(plugin_manager):
 
     :param plugin_manager: 插件管理器实例。
     """
-    plugin_manager.register_plugin(
+    plugin_manager.register_system(
         name=PLUGIN_NAME,
         commands=["系统情况"],
         asynchronous=False,

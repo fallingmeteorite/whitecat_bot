@@ -1,49 +1,72 @@
 import datetime
+import os
 import time
 
 from common.log import logger
-from common.message_process import messageprocess
 from core.backend import app
 from core.wsbot import ws_manager
-from scheduling.asyn_task_assignment import asyntask
-from scheduling.line_task_assignment import linetask
 
 
-def main():
-    start_time = datetime.datetime.now()
-    """
-    主函数用于同时运行WebSocket服务器和FastAPI应用。
-    它通过多线程来实现两者的同时运行，并在接收到键盘中断时安全地停止这两个服务。
-    """
+class Application:
+    def __init__(self):
+        self.ws_thread = None
+        self.fastapi_thread = None
+        self.start_time = None
+        self.restart_value = True
 
-    # 创建并运行WebSocket服务器线程
-    ws_thread = ws_manager.create_job()
-    ws_thread.start()
+    def run(self):
+        """
+        主函数用于同时运行WebSocket服务器和FastAPI应用。
+        它通过多线程来实现两者的同时运行，并在接收到键盘中断时安全地停止这两个服务。
+        """
+        self.start_time = datetime.datetime.now()
 
-    # 创建并运行FastAPI应用线程
-    fastapi_thread = app.create_job()
-    fastapi_thread.start()
+        # 创建并运行WebSocket服务器线程
+        self.ws_thread = ws_manager.create_job()
+        self.ws_thread.start()
 
-    # 等待键盘中断
-    try:
-        while True:
-            time.sleep(1)
-            pass  # 主线程等待，让其他守护线程运行
-    except KeyboardInterrupt:
+        # 创建并运行FastAPI应用线程
+        self.fastapi_thread = app.create_job()
+        self.fastapi_thread.start()
+
+        # 等待键盘中断
+        try:
+            while True:
+                self.restart()
+                time.sleep(2)
+        except KeyboardInterrupt:
+            self.stop()
+
+    def stop(self):
+        """
+        停止所有服务并清理资源。
+        """
         end_time = datetime.datetime.now()
-        time_difference = end_time - start_time
+        time_difference = end_time - self.start_time
         logger.info(f"本次程序运行了{time_difference},正在停止所有进程...")
-        ws_manager.alive = False
 
         # TODO 这里应该检查是否所有任务都已完成（如图像生成等）
-        messageprocess.stop()  # 停止消息接收
-        linetask.stop_scheduler()  # 停止调度线程
-        asyntask.stop_scheduler()  # 停止调度线程
-        ws_thread.join(timeout=2)  # 等待WebSocket服务器线程结束，超时5秒
-        fastapi_thread.join(timeout=2)  # 等待FastAPI应用线程结束，超时5秒
+        self.ws_thread.stop()  # 等待WebSocket服务器线程结束，超时5秒
+        self.fastapi_thread.stop()  # 等待FastAPI应用线程结束，超时5秒
         logger.info("已停止")
-        return
+
+    def restart(self):
+        if os.path.exists("restart_info.txt") and self.restart_value:
+            with open("restart_info.txt", "r") as f:  # 打开文件
+                data = f.read().split(",")  # 读取文件
+                if data[0] == "True":
+                    self.restart_value = False
+
+                    logger.info("正在重启服务...")
+                    ws_manager.stop()  # 停止消息接收
+                    self.ws_thread.stop()  # 等待FastAPI应用线程结束
+
+                    self.ws_thread.start()
+
+                    logger.info("服务已重启")
+                    os.remove("restart_info.txt")
+                    self.restart_value = True
 
 
-if __name__ == "__main__":
-    main()
+main = Application()
+main.run()
