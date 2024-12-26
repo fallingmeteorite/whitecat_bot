@@ -2,7 +2,7 @@ import os
 import threading
 import time
 
-from common.log import logger
+from common.logging import logger
 from common.module_load import reload
 from watchdog.observers import Observer
 from watchdog.utils.events import FileSystemEventHandler

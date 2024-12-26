@@ -3,7 +3,7 @@ import gc
 import importlib.util
 import os
 
-from common.log import logger
+from common.logging import logger
 from scheduling.thread_scheduling import asyntask, linetask
 
 uninstall_manager = None
@@ -17,12 +17,18 @@ class PluginUninstall:
         logger.debug("正在卸载已加载插件信息和命令")
         # 判断要卸载的是什么插件
         if hasattr(uninstall_manager, "plugin_info"):
+            asyntask.force_stop_task(name)
+            linetask.force_stop_task(name)
             del uninstall_manager.plugin_info[name]
         # 判断要卸载的是什么插件
         if hasattr(uninstall_manager, "file_info"):
+            asyntask.force_stop_task(name)
+            linetask.force_stop_task(name)
             del uninstall_manager.file_info[name]
         # 判断要卸载的是什么插件
         if hasattr(uninstall_manager, "filter_info"):
+            asyntask.force_stop_task(name)
+            linetask.force_stop_task(name)
             del uninstall_manager.filter_info[name]
         # 先结束定时器任务
         if hasattr(uninstall_manager, "time_tasks"):

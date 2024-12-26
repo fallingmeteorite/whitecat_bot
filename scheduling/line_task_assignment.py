@@ -7,7 +7,7 @@ from concurrent.futures import ThreadPoolExecutor, TimeoutError
 from functools import partial
 
 from common.config import config
-from common.log import logger
+from common.logging import logger
 
 
 class LineTask:

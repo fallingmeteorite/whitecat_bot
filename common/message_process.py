@@ -1,17 +1,14 @@
-import os
 import queue
 import threading
 import time
 
 from common.config import config
-from common.log import logger
-from core.globals import glob_instance
+from common.logging import logger
 from manager.block_manager import ban_filter, ban_plugin
 from manager.file_manager import file_manager
 from manager.filter_manager import filter_manager
 from manager.plugin_manager import plugin_manager
 from manager.system_manager import system_manager
-from manager.timer_manager import timer_manager
 
 
 # 获取命令调用的插件
@@ -44,13 +41,11 @@ class MessageProcess:
             self.lock = True
             # 开启消息处理线程
             # 不设置守护线程,因为任务调度也在这个线程下面
-            threading.Thread(target=self.plugin, args=(), daemon=True).start()  # 处理插件消息
-            threading.Thread(target=self.file, args=(), daemon=True).start()  # 处理筛选器消息
-            threading.Thread(target=self.filter, args=(), daemon=True).start()  # 处理筛选器消息
-            threading.Thread(target=self.system, args=(), daemon=True).start()  # 系统插件处理器
-            threading.Thread(target=self.monitor, args=(), daemon=True).start()  # 处理无用消息
-            threading.Thread(target=timer_manager.handle_command,
-                             args=(glob_instance.ws, config["timer_gids_list"]), daemon=True).start()  # 启动定时器
+            threading.Thread(target=self.plugin, daemon=True).start()  # 处理插件消息
+            threading.Thread(target=self.file, daemon=True).start()  # 处理筛选器消息
+            threading.Thread(target=self.filter, daemon=True).start()  # 处理筛选器消息
+            threading.Thread(target=self.system, daemon=True).start()  # 系统插件处理器
+            threading.Thread(target=self.monitor, daemon=True).start()  # 处理无用消息
 
     def unwrap_quote(self, m):
         return m.replace("&", "&").replace("[", "[").replace("]", "]").replace(",", ",")

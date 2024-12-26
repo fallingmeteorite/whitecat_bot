@@ -1,5 +1,5 @@
 from common.config import config
-from common.log import logger
+from common.logging import logger
 from common.message_send import send_message  # 导入发送消息的函数
 from common.module_load import get_directories
 

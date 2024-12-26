@@ -5,8 +5,8 @@ PLUGIN_NAME = "系统重启"  # 自定义插件名称
 
 def system_restarts(websocket, uid, nickname, gid, message_dict):
     send_message(websocket, uid, gid, message="所有处理线程开始重启,停止接受消息,请稍等")
-    with open('restart_info.txt', 'w') as f:
-        f.write(f"True, {gid}")
+    with open('restart.txt', 'w') as f:
+        f.write(f"stop,{gid}")
 
 
 def register(plugin_manager):

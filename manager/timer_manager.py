@@ -2,7 +2,7 @@ import asyncio
 import time
 
 from common.config import config
-from common.log import logger
+from common.logging import logger
 from common.module_load import load
 from scheduling.thread_scheduling import add_task
 

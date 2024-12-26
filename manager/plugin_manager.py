@@ -1,7 +1,7 @@
 import asyncio
 
 from common.config import config
-from common.log import logger
+from common.logging import logger
 from common.message_send import send_message
 from common.module_load import load
 from manager.user_manager import tracker

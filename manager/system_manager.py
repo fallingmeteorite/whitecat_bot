@@ -1,5 +1,5 @@
 from common.config import config
-from common.log import logger
+from common.logging import logger
 from common.module_load import load
 from scheduling.thread_scheduling import add_task
 
@@ -26,5 +26,3 @@ class SystemManager:
 
 system_dir = config["system_dir"]
 system_manager, _ = load(system_dir, SystemManager)
-
-

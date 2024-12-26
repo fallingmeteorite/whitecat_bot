@@ -2,7 +2,7 @@ import asyncio
 import inspect
 import json
 
-from common.log import logger
+from common.logging import logger
 
 
 def is_in_event_loop():

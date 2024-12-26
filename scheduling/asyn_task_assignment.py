@@ -6,7 +6,7 @@ import threading
 import time
 
 from common.config import config
-from common.log import logger
+from common.logging import logger
 
 
 class AsynTask:

@@ -1,7 +1,7 @@
 import os
 
 from common.config import config
-from common.log import logger
+from common.logging import logger
 from common.message_send import send_message
 
 PLUGIN_NAME = "缓存删除"  # 自定义插件名称
@@ -62,9 +62,9 @@ def del_cache(websocket, uid, nickname, gid, message_dict):
         send_message(websocket, uid, gid, message="你没有权限执行这条命令!")
         return
 
-    folder_path_list = ["log"]
+    folder_path_list = ["log","cache_files/noob","cache_files/tmp"]
 
-    if "del" in message:
+    if "temp" in message:
         for folder_path in folder_path_list:
             del_file(folder_path)
         send_message(websocket, uid, gid, message="缓存文件夹清理完成")
@@ -86,7 +86,7 @@ def show_help(websocket, uid, gid):
     :param gid: 群组ID。
     """
     help_text = ("参数:\n"
-                 "del    # 删除所有缓存文件\n"
+                 "temp    # 删除所有缓存文件\n"
                  "show   # 展示文件夹大小")
     send_message(websocket, uid, gid, message=help_text)
 

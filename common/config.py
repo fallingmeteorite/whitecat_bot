@@ -1,6 +1,6 @@
 import yaml
 
-from common.log import logger
+from common.logging import logger
 
 config: dict = {}
 
