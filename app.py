@@ -73,6 +73,7 @@ class Application:
                             f.write(f"ok,{data[1]},{end_time - self.start_time}")
                             break
                 logger.info("服务器重启完毕")
+                self.restart_value = True
 
 
 main = Application()
