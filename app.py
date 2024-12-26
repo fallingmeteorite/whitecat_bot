@@ -31,7 +31,7 @@ class Application:
         try:
             while True:
                 self.restart()
-                time.sleep(2)
+                time.sleep(4)
         except KeyboardInterrupt:
             self.stop()
 
@@ -45,10 +45,10 @@ class Application:
 
     def restart(self):
         if os.path.exists("restart.txt") and self.restart_value:
-            self.restart_value = False
             with open("restart.txt", "r") as f:  # 打开文件
                 data = f.read().split(",")  # 读取文件
             if data[0] == "stop":
+                self.restart_value = False
                 with open('restart_wsbot.txt', 'w') as f:
                     f.write("restart")
                 with open('restart_fastapi.txt', 'w') as f:
@@ -73,7 +73,6 @@ class Application:
                             f.write(f"ok,{data[1]},{end_time - self.start_time}")
                             break
                 logger.info("服务器重启完毕")
-                self.restart_value = True
 
 
 main = Application()
