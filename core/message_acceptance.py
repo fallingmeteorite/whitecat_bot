@@ -124,7 +124,7 @@ def file_monitor():
             if os.path.exists("./restart_wsbot.txt"):
                 with open("./restart_wsbot.txt", "r") as file:
                     if file.read().strip() == "restart":
-                        logger.info("监控到停止条件，准备停止 FastAPI 应用...")
+                        logger.info("监控到停止条件，准备停止 wsbot 应用...")
                         os.kill(os.getpid(), signal.SIGTERM)
                         os.remove("restart_wsbot.txt")
                         break
