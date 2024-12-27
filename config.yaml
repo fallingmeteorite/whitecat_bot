@@ -9,6 +9,9 @@ plugin_dir: ./function_plugins
 timer_dir: ./timers_plugins
 system_dir: ./system_plugins
 
+# 适配器地址
+adapter_dir: ./adapter
+
 #过滤器白名单
 valid_gids_list: []
 

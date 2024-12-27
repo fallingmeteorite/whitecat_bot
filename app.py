@@ -3,6 +3,7 @@ import os
 import time
 from typing import Optional
 
+from common.config import config
 from common.logging import logger
 from utils.thread_creation import ThreadController
 
@@ -21,11 +22,41 @@ class Application:
         self.start_time: Optional[datetime.datetime] = None
         self.restart_value = True
 
+    def check_py_files(self) -> bool:
+        """
+        检查指定目录下是否存在 .py 文件。
+
+        Args:
+            directory: 要检查的目录路径。
+
+        Returns:
+            bool: 如果存在 .py 文件返回 True，否则返回 False。
+        """
+        # 检查路径是否存在
+        directory = config["adapter_dir"]
+        if not os.path.exists(directory):
+            return False
+
+        # 检查路径是否是一个目录
+        if not os.path.isdir(directory):
+            return False
+
+        # 遍历目录，检查是否存在 .py 文件
+        for file in os.listdir(directory):
+            if file.endswith(".py"):
+                return True
+
+        logger.debug(f"在目录 '{directory}' 中未找到 .py 文件。")
+        return False
+
     def run(self) -> None:
         """
         主函数用于同时运行 WebSocket 服务器和 FastAPI 应用。
         它通过多线程来实现两者的同时运行，并在接收到键盘中断时安全地停止这两个服务。
         """
+        if not self.check_py_files():
+            raise Exception("文件夹内没有可用适配器,进程退出")
+
         self.start_time = datetime.datetime.now()
 
         # 创建并运行 WebSocket 服务器线程
