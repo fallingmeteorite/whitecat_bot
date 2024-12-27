@@ -1,12 +1,19 @@
+from typing import Dict
+
 import psutil
 
-from common.message_send import send_message  # 导入发送消息的函数
+from common.message_send import send_message
 
-PLUGIN_NAME = "内存和CPU查询"  # 自定义插件名称
+SYSTEM_NAME = "内存和CPU查询"  # 自定义插件名称
 
 
-def get_memory_usage():
-    """获取内存使用情况并返回格式化字符串"""
+def get_memory_usage() -> str:
+    """
+    获取内存使用情况并返回格式化字符串。
+
+    Returns:
+        str: 内存使用情况的格式化字符串。
+    """
     mem = psutil.virtual_memory()
     return (
             "=" * 20 + "\n" +
@@ -20,8 +27,16 @@ def get_memory_usage():
     )
 
 
-def get_top_memory_processes(limit=5):
-    """获取内存使用最多的前几个进程并返回格式化字符串"""
+def get_top_memory_processes(limit: int = 5) -> str:
+    """
+    获取内存使用最多的前几个进程并返回格式化字符串。
+
+    Args:
+        limit: 返回的进程数量，默认为 5。
+
+    Returns:
+        str: 内存使用最多的进程的格式化字符串。
+    """
     top_mem = sorted(
         (p for p in psutil.process_iter(['pid', 'name', 'memory_percent']) if p.info['memory_percent'] is not None),
         key=lambda p: p.info['memory_percent'], reverse=True
@@ -36,8 +51,13 @@ def get_top_memory_processes(limit=5):
     return proc_info
 
 
-def get_cpu_usage():
-    """获取CPU使用情况并返回格式化字符串"""
+def get_cpu_usage() -> str:
+    """
+    获取CPU使用情况并返回格式化字符串。
+
+    Returns:
+        str: CPU使用情况的格式化字符串。
+    """
     cpu_percent = psutil.cpu_percent(interval=1)
     return (
             "=" * 20 + "\n" +
@@ -46,8 +66,16 @@ def get_cpu_usage():
     )
 
 
-def get_top_cpu_processes(limit=5):
-    """获取CPU使用最多的前几个进程并返回格式化字符串"""
+def get_top_cpu_processes(limit: int = 5) -> str:
+    """
+    获取CPU使用最多的前几个进程并返回格式化字符串。
+
+    Args:
+        limit: 返回的进程数量，默认为 5。
+
+    Returns:
+        str: CPU使用最多的进程的格式化字符串。
+    """
     top_cpu = sorted(
         (p for p in psutil.process_iter(['pid', 'name', 'cpu_percent']) if p.info['cpu_percent'] is not None),
         key=lambda p: p.info['cpu_percent'], reverse=True
@@ -62,15 +90,16 @@ def get_top_cpu_processes(limit=5):
     return proc_info
 
 
-def echo(websocket, uid, nickname, gid, message_dict):
+def memory_footprint(websocket, uid: str, nickname: str, gid: str, message_dict: Dict) -> None:
     """
     回显输入的内容并发送内存和CPU使用情况。
 
-    :param websocket: WebSocket连接对象。
-    :param uid: 用户ID。
-    :param nickname: 用户昵称。
-    :param gid: 群组ID。
-    :param message_dict: 消息字典，包含发送的消息。
+    Args:
+        websocket: WebSocket 连接对象。
+        uid: 用户 ID。
+        nickname: 用户昵称。
+        gid: 群组 ID。
+        message_dict: 消息字典，包含发送的消息。
     """
     message = message_dict["raw_message"].strip().lower()
 
@@ -88,13 +117,14 @@ def echo(websocket, uid, nickname, gid, message_dict):
     send_message(websocket, uid, gid, message=output)
 
 
-def show_help(websocket, uid, gid):
+def show_help(websocket, uid: str, gid: str) -> None:
     """
     显示插件的帮助信息。
 
-    :param websocket: WebSocket连接对象。
-    :param uid: 用户ID。
-    :param gid: 群组ID。
+    Args:
+        websocket: WebSocket 连接对象。
+        uid: 用户 ID。
+        gid: 群组 ID。
     """
     help_text = ("用法:\n"
                  "系统情况 \n"
@@ -102,16 +132,18 @@ def show_help(websocket, uid, gid):
     send_message(websocket, uid, gid, message=help_text)
 
 
-def register(plugin_manager):
+def register(system_manager) -> None:
     """
     注册插件到插件管理器。
 
-    :param plugin_manager: 插件管理器实例。
+    Args:
+        system_manager: 插件管理器实例。
     """
-    plugin_manager.register_system(
-        name=PLUGIN_NAME,
-        commands=["系统情况"],
+    system_manager.register_system(
+        name=SYSTEM_NAME,
+        commands=["/系统情况"],
         asynchronous=False,
         timeout_processing=True,
-        handler=lambda websocket, uid, nickname, gid, message_dict: echo(websocket, uid, nickname, gid, message_dict),
+        handler=lambda websocket, uid, nickname, gid, message_dict: memory_footprint(websocket, uid, nickname, gid,
+                                                                                     message_dict),
     )

@@ -1,19 +1,21 @@
 import os
+from typing import Dict
 
 from common.config import config
 from common.logging import logger
 from common.message_send import send_message
 
-PLUGIN_NAME = "缓存删除"  # 自定义插件名称
+SYSTEM_NAME = "缓存删除"  # 自定义插件名称
 
 
-def del_file(folder_path: str):
+def del_file(folder_path: str) -> None:
     """
     删除指定文件夹中的所有文件。
 
-    :param folder_path: 文件夹路径。
+    Args:
+        folder_path: 文件夹路径。
     """
-    for root, dirs, files in os.walk(folder_path):
+    for root, _, files in os.walk(folder_path):
         for file in files:
             file_path = os.path.join(root, file)
             try:
@@ -27,11 +29,14 @@ def show_file(folder_path: str) -> int:
     """
     计算指定文件夹中所有文件的总大小（MB）。
 
-    :param folder_path: 文件夹路径。
-    :return: 文件夹总大小（MB）。
+    Args:
+        folder_path: 文件夹路径。
+
+    Returns:
+        int: 文件夹总大小（MB）。
     """
     total_size = 0
-    for root, dirs, files in os.walk(folder_path):
+    for root, _, files in os.walk(folder_path):
         for file in files:
             file_path = os.path.join(root, file)
             try:
@@ -41,15 +46,16 @@ def show_file(folder_path: str) -> int:
     return int(total_size / (1024 * 1024))
 
 
-def del_cache(websocket, uid, nickname, gid, message_dict):
+def del_cache(websocket, uid: str, nickname: str, gid: str, message_dict: Dict) -> None:
     """
     处理缓存删除和展示文件夹大小的命令。
 
-    :param websocket: WebSocket连接对象。
-    :param uid: 用户ID。
-    :param nickname: 用户昵称。
-    :param gid: 群组ID。
-    :param message_dict: 消息字典，包含发送的消息。
+    Args:
+        websocket: WebSocket 连接对象。
+        uid: 用户 ID。
+        nickname: 用户昵称。
+        gid: 群组 ID。
+        message_dict: 消息字典，包含发送的消息。
     """
     message = message_dict['raw_message'].strip().lower()
 
@@ -57,12 +63,12 @@ def del_cache(websocket, uid, nickname, gid, message_dict):
         show_help(websocket, uid, gid)
         return
 
-    administrator = config["admin"]
+    administrator = config.get("admin", [])
     if uid not in administrator:
         send_message(websocket, uid, gid, message="你没有权限执行这条命令!")
         return
 
-    folder_path_list = ["log","cache_files/noob","cache_files/tmp"]
+    folder_path_list = ["log", "cache_files/noob", "cache_files/tmp"]
 
     if "temp" in message:
         for folder_path in folder_path_list:
@@ -77,13 +83,14 @@ def del_cache(websocket, uid, nickname, gid, message_dict):
         send_message(websocket, uid, gid, message="无效的命令参数。请使用 'help' 查看帮助。")
 
 
-def show_help(websocket, uid, gid):
+def show_help(websocket, uid: str, gid: str) -> None:
     """
     显示插件的帮助信息。
 
-    :param websocket: WebSocket连接对象。
-    :param uid: 用户ID。
-    :param gid: 群组ID。
+    Args:
+        websocket: WebSocket 连接对象。
+        uid: 用户 ID。
+        gid: 群组 ID。
     """
     help_text = ("参数:\n"
                  "temp    # 删除所有缓存文件\n"
@@ -91,15 +98,16 @@ def show_help(websocket, uid, gid):
     send_message(websocket, uid, gid, message=help_text)
 
 
-def register(plugin_manager):
+def register(system_manager) -> None:
     """
     注册插件到插件管理器。
 
-    :param plugin_manager: 插件管理器实例。
+    Args:
+        system_manager: 插件管理器实例。
     """
-    plugin_manager.register_system(
-        name=PLUGIN_NAME,
-        commands=["del_cache"],
+    system_manager.register_system(
+        name=SYSTEM_NAME,
+        commands=["/del_cache"],
         asynchronous=False,
         timeout_processing=True,
         handler=lambda websocket, uid, nickname, gid, message_dict: del_cache(websocket, uid, nickname, gid,
