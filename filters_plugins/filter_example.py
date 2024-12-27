@@ -1,7 +1,7 @@
 from common.message_send import send_message
 
 
-def example_filter_function(websocket, uid, gid, message_match, message_dict):
+def example_filter_function(websocket, uid, gid, message_dict):
     """
     示例过滤器函数。
     
@@ -9,8 +9,8 @@ def example_filter_function(websocket, uid, gid, message_match, message_dict):
     :param message_dict: 完整的聊天数据
     """
 
-    if 'hello' in message_match:
-        message = f"Matched '{message_match}'"
+    if 'hello' in message_dict:
+        message = f"Matched '{message_dict}'"
         send_message(websocket, uid, gid, message=message)
         return True
     return False
