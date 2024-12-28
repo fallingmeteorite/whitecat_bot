@@ -135,12 +135,18 @@ class AsynTask:
 
     def stop_scheduler(self) -> None:
         """
-        停止调度线程和事件循环。
+        停止调度线程和事件循环，并强制杀死所有任务。
         """
         logger.warning("退出清理")
         self.scheduler_stop_event.set()
         with self.condition:
             self.condition.notify_all()
+
+        # 强制取消所有正在运行的任务
+        for task_id, future in self.running_tasks.items():
+            future.cancel()
+            logger.warning(f"任务 {task_id} 已被强制取消")
+
         # 停止事件循环（防止事件循环还没开启就结束会引发报错）
         try:
             self.loop.call_soon_threadsafe(self.loop.stop)
