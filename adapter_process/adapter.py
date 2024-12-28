@@ -7,14 +7,10 @@ from common.logging import logger
 
 
 class AdapterManager:
-    def __init__(self, message: Any):
+    def __init__(self):
         """
         初始化 AdapterManager。
-
-        Args:
-            message: 需要处理的消息。
         """
-        self.message = message
         self.directory_path = config["adapter_dir"]
         self.adapters = self._load_adapters()  # 初始化时加载所有适配器
 
@@ -59,9 +55,12 @@ class AdapterManager:
                     logger.debug(f"消息适配器已加载: ADAPTER| {module_name} |ADAPTER")
         return adapters
 
-    def start(self) -> Tuple[Optional[Any], Optional[Any], Optional[Any], Optional[Any]]:
+    def start(self, message: Any) -> Tuple[Optional[Any], Optional[Any], Optional[Any], Optional[Any]]:
         """
         运行所有适配器，直到某个适配器返回非 None 值。
+
+        Args:
+            message: 需要处理的消息。
 
         Returns:
             Tuple[Optional[Any], Optional[Any], Optional[Any], Optional[Any]]:
@@ -69,10 +68,15 @@ class AdapterManager:
         """
         for adapter in self.adapters:
             try:
-                result = adapter.handle_message(self.message)
+                result = adapter.handle_message(message)
                 if result is not None:
                     logger.debug(f"适配器 {adapter.__name__} 处理消息成功")
                     return result
             except Exception as e:
                 logger.error(f"适配器 {adapter.__name__} 处理消息失败: {e}")
         return None, None, None, None
+
+
+
+adapter_manager = AdapterManager()  # Instantiate the AdapterManager
+# result = adapter_manager.start("your_message_here")  # Pass the message to the start method
