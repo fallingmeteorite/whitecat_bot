@@ -75,5 +75,4 @@ class AdapterManager:
                     return result
             except Exception as e:
                 logger.error(f"适配器 {adapter.__name__} 处理消息失败: {e}")
-        logger.debug("所有适配器均未处理消息，返回默认值")
         return None, None, None, None

@@ -173,7 +173,7 @@ class MessageProcessor:
             if self._process_filters(item):  # 最后处理过滤器，防止指令被过滤器误接收
                 return True
             # 如果过滤器也不接受就移除
-            logger.debug(f"监测到无用信息,已经从信息队列中删除: {item}")
+            logger.debug(f"监测到无用信息,已经从信息队列中删除")
             return True
 
         self._process_queue(monitor_handler)
