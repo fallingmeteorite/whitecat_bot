@@ -34,7 +34,7 @@ class FileManager:
         if not callable(handler):
             raise ValueError("Handler must be a callable function.")
         self.file_info[name] = (asynchronous, timeout_processing, handler)
-        logger.debug(f"FILE | 文件检测: {name} 导入成功 | FILE")
+        logger.debug(f"FILE 文件检测:| {name} |导入成功 FILE")
 
     def handle_command(self, websocket, uid: int, gid: int, nickname: str, message_dict: dict, file: str) -> None:
         """

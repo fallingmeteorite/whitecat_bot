@@ -1,6 +1,4 @@
-import importlib.util
-import os
-from typing import List, Optional, Tuple, Any, Dict, Callable
+from typing import Optional, Tuple, Any, Dict, Callable
 
 from common.config import config
 from common.logging import logger
@@ -32,7 +30,7 @@ class AdapterManager:
         if not callable(handler):
             raise ValueError("Handler must be a callable function.")
         self.adapter_info[name] = handler
-        logger.debug(f"ADAPTER| | 适配器: {name} 导入成功 | ADAPTER|")
+        logger.debug(f"ADAPTER 适配器:| {name} |导入成功 ADAPTER|")
 
     def handle_command(self, message: Any) -> Tuple[Optional[Any], Optional[Any], Optional[Any], Optional[Any]]:
         """
@@ -50,15 +48,13 @@ class AdapterManager:
             try:
                 result = adapter_func(message)
                 if result is not None:
-                    logger.debug(f"适配器 {adapter_name} 处理消息成功")
+                    logger.debug(f"适配器| {adapter_name} |处理消息成功")
                     return result
             except Exception as e:
-                logger.error(f"适配器 {adapter_name} 处理消息失败: {e}")
+                logger.error(f"适配器| {adapter_name} |处理消息失败: {e}")
         return None, None, None, None
 
 
 # 加载文件管理器
 adapter_dir = config["adapter_dir"]
 adapter_manager, load_module = load(adapter_dir, AdapterManager)
-
-

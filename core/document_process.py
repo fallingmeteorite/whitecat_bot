@@ -133,7 +133,6 @@ def main():
     app.run_fastapi_app()
 
 
-
 try:
     main()
 except KeyboardInterrupt:

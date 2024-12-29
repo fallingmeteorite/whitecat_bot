@@ -53,7 +53,7 @@ class TimerManager:
         if not callable(job_func):
             raise ValueError("Handler must be a callable function.")
         self.time_tasks.append((timer_name, job_func, target_time))
-        logger.debug(f"TIME | 定时器: {timer_name} 加载成功 | TIME")
+        logger.debug(f"TIME 定时器:| {timer_name} |加载成功 TIME")
 
 
 # 加载定时器管理器

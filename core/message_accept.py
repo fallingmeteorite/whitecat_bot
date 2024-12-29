@@ -45,10 +45,10 @@ class WebSocketManager:
             if os.path.exists("./restart.txt"):
                 with open("./restart.txt", "r") as f:
                     data = f.read().split(",")
-                send_message(self.websocket, None, data[1], message=f"服务器重启完毕, 花费时间为: {data[2]} s")
+                send_message(self.websocket, None, int(data[1]), message=f"服务器重启完毕, 花费时间为: {data[2]} s")
                 os.remove("./restart.txt")  # 删除文件
                 break
-            time.sleep(0.5)  # 每次检查间隔 0.5 秒
+            time.sleep(0.4)  # 每次检查间隔 0.5 秒
 
         # 启动定时器任务
         threading.Thread(
@@ -144,7 +144,6 @@ def file_monitor():
     while True:
         try:
             if os.path.exists("./restart_wsbot.txt"):
-
                 logger.info("监控到停止条件，准备停止 wsbot 应用...")
                 os.kill(os.getpid(), signal.SIGTERM)
                 os.remove("restart_wsbot.txt")

@@ -37,7 +37,7 @@ class PluginManager:
         if not callable(handler):
             raise ValueError("Handler must be a callable function.")
         self.plugin_info[name] = (asynchronous, timeout_processing, commands, handler)
-        logger.debug(f"FUNC | 插件: {name} 导入成功 | FUNC")
+        logger.debug(f"FUNC 功能插件:| {name} |导入成功 FUNC")
 
     def handle_command(self, websocket, uid: int, gid: int, nickname: str, message: str, plugin_name: str) -> None:
         """

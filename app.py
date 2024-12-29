@@ -28,7 +28,7 @@ class Application:
             bool: 如果存在文件返回 True，否则返回 False。
         """
         # 检查路径是否存在
-        if len(os.listdir(config["adapter_dir"])) - 1 == 0:
+        if len(os.listdir(config["adapter_dir"])) - 2 == 0:
             return False
         return True
 
@@ -37,6 +37,11 @@ class Application:
         主函数用于同时运行 WebSocket 服务器和 FastAPI 应用。
         它通过多线程来实现两者的同时运行，并在接收到键盘中断时安全地停止这两个服务。
         """
+        # 创建临时环境变量
+        os.environ['restart'] = "running"
+        os.environ['restart_fastapi'] = "running"
+        os.environ['restart_wsbot'] = "running"
+
         if not self.check_py_files():
             raise Exception("文件夹内没有可用适配器,进程退出")
 
@@ -73,8 +78,8 @@ class Application:
             with open("restart.txt", "r") as f:
                 data = f.read().split(",")
             if data[0] == "stop":
-                self.start_time = datetime.datetime.now()
                 self.restart_value = False
+                self.start_time = datetime.datetime.now()
                 with open('restart_wsbot.txt', 'w') as f:
                     pass
                 with open('restart_fastapi.txt', 'w') as f:
@@ -86,8 +91,6 @@ class Application:
                     time.sleep(1.0)
                     if not os.path.exists("restart_wsbot.txt") and not os.path.exists(
                             "restart_fastapi.txt") and not self.restart_value:
-                        self.restart_value = True
-
                         # 创建并运行 WebSocket 服务器线程
                         self.fastapi_thread = ThreadController("python -m core.document_process").run()
                         self.ws_thread = ThreadController("python -m core.message_accept").run()
@@ -99,6 +102,7 @@ class Application:
                             f.write(f"ok,{data[1]},{end_time - self.start_time}")
                             break
                 logger.info("服务器重启完毕")
+                self.restart_value = True
 
 
 main = Application()

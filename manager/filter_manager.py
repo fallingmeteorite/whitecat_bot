@@ -37,7 +37,7 @@ class FilterManager:
         if not isinstance(filter_rule, str):
             raise ValueError("Filter rule must be a string representing a regex pattern.")
         self.filter_info[filter_name] = (filter_rule, asynchronous, timeout_processing, handler)
-        logger.debug(f"FILTERS | 过滤器: {filter_name} 导入成功 | FILTERS")
+        logger.debug(f"FILTERS 过滤器:| {filter_name} |导入成功 FILTERS")
 
     def handle_message(self, websocket, uid: int, gid: int, message_dict: dict, message: str, filter_name: str) -> None:
         """

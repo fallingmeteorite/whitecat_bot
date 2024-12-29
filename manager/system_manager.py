@@ -34,7 +34,7 @@ class SystemManager:
         if not callable(handler):
             raise ValueError("Handler must be a callable function.")
         self.system_info[name] = (asynchronous, timeout_processing, commands, handler)
-        logger.debug(f"SYSTEM | 系统插件: {name} 导入成功 | SYSTEM")
+        logger.debug(f"SYSTEM 系统插件:| {name} |导入成功 SYSTEM")
 
     def handle_command(self, websocket, uid: int, gid: int, nickname: str, message: str, system_name: str) -> None:
         """
