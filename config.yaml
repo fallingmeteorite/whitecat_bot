@@ -3,30 +3,30 @@ websocket_uri: "ws://127.0.0.1"
 websocket_port: 7740
 
 #插件地址
-filters_dir: ./filters_plugins
-file_dir: ./papers_plugins
-plugin_dir: ./function_plugins
-timer_dir: ./timers_plugins
-system_dir: ./system_plugins
+filters_dir: ./plugins_filters
+file_dir: ./plugins_papers
+plugin_dir: ./plugins_function
+timer_dir: ./plugins_timers
+system_dir: ./plugins_system
 
 # 适配器地址
-adapter_dir: ./adapter
+adapter_dir: ./plugins_adapter
 
 #过滤器白名单
-valid_gids_list: []
+valid_gids_list: [ ]
 
 
 #过滤器黑名单
 #例子:{QQ号或者群号:[插件名字,all=所有插件]}
-ban_valid_uids: {}
+ban_valid_uids: { }
 
 #插件白名单
-plugin_gids_list: []
+plugin_gids_list: [ ]
 
 
 # 插件黑名单
 #例子:{QQ号或者群号:[插件名字,all=所有插件]}
-ban_plugin_uids: {}
+ban_plugin_uids: { }
 
 #启动插件热加载
 enable_hot_loading: true
@@ -38,11 +38,11 @@ maximum_queue: 12
 user_use_file: ./user_use_count.txt
 
 # 定时器发布的群聊
-timer_gids_list: []
+timer_gids_list: [ ]
 
 
 # 限制使用次数的群
-use_restricted_groups: []
+use_restricted_groups: [ ]
 
 
 # 限制最大使用次数
@@ -52,6 +52,6 @@ maximum_number_uses: 25
 watch_dog_time: 60
 
 #管理员
-admin: []
+admin: [ ]
 
 

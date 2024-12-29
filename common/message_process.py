@@ -3,14 +3,16 @@ import threading
 import time
 from typing import Dict, Optional
 
-from adapter_process.adapter import adapter_manager
 from common.config import config
 from common.logging import logger
+
+from manager.adapter_manager import adapter_manager
 from manager.block_manager import ban_filter, ban_plugin
+from manager.system_manager import system_manager
 from manager.file_manager import file_manager
 from manager.filter_manager import filter_manager
 from manager.plugin_manager import plugin_manager
-from manager.system_manager import system_manager
+
 
 
 class MessageProcessor:
@@ -29,7 +31,7 @@ class MessageProcessor:
             websocket: WebSocket 连接对象。
             message: 接收到的消息字典。
         """
-        uid, nickname, gid, message_dict = adapter_manager.start(message)
+        uid, nickname, gid, message_dict = adapter_manager.handle_command(message)
         if uid is not None and nickname is not None and message_dict is not None:
             logger.info(f"收到服务器有效数据: {uid}, {nickname}, {gid}, {message_dict}")
             self.message_queue.put((websocket, uid, nickname, gid, message_dict))

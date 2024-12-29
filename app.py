@@ -24,30 +24,13 @@ class Application:
 
     def check_py_files(self) -> bool:
         """
-        检查指定目录下是否存在 .py 文件。
-
-        Args:
-            directory: 要检查的目录路径。
-
         Returns:
-            bool: 如果存在 .py 文件返回 True，否则返回 False。
+            bool: 如果存在文件返回 True，否则返回 False。
         """
         # 检查路径是否存在
-        directory = config["adapter_dir"]
-        if not os.path.exists(directory):
+        if len(os.listdir(config["adapter_dir"])) - 1 == 0:
             return False
-
-        # 检查路径是否是一个目录
-        if not os.path.isdir(directory):
-            return False
-
-        # 遍历目录，检查是否存在 .py 文件
-        for file in os.listdir(directory):
-            if file.endswith(".py"):
-                return True
-
-        logger.debug(f"在目录 '{directory}' 中未找到 .py 文件。")
-        return False
+        return True
 
     def run(self) -> None:
         """

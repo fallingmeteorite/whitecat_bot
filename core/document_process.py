@@ -48,9 +48,9 @@ class Backend(FastAPI):
         """
         挂载静态文件目录，如果目录存在。
         """
-        static_dir = "cache_files"
+        static_dir = "files_cache"
         if os.path.exists(static_dir):
-            self.mount("/cache_files", StaticFiles(directory=static_dir), name="cache_files")
+            self.mount("/files_cache", StaticFiles(directory=static_dir), name="files_cache")
             logger.info(f"静态文件目录 '{static_dir}' 已挂载。")
         else:
             logger.warning(f"静态文件目录 '{static_dir}' 不存在，无法挂载。")

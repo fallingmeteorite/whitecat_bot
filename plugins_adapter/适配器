@@ -1,0 +1,13 @@
+
+
+# 提取数据
+    uid = message["user_id"]
+    nickname = message["sender"]["nickname"]
+    gid = message.get("group_id", None)
+    message_dict = {
+        "raw_message": unwrap_quote(message["raw_message"]),
+        "message": message["message"][0],
+        'message_id': message.get('message_id', None)
+    }
+
+    return uid, nickname, gid, message_dict

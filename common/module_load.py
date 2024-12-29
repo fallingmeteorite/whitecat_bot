@@ -138,7 +138,7 @@ def reload(path_to_watch: str, original_folder: str, reload_enable: bool, target
             if reload_enable:
                 # 重新加载插件
                 spec = importlib.util.spec_from_file_location(original_folder,
-                                                             f"{path_to_watch}/{original_folder}/{original_folder}.py")
+                                                              f"{path_to_watch}/{original_folder}/{original_folder}.py")
                 module = importlib.util.module_from_spec(spec)
                 spec.loader.exec_module(module)
                 load_module[original_folder] = module
@@ -156,7 +156,7 @@ def reload(path_to_watch: str, original_folder: str, reload_enable: bool, target
             if reload_enable:
                 # 加载重命名后的插件
                 spec = importlib.util.spec_from_file_location(target_folder,
-                                                             f"{path_to_watch}/{target_folder}/{target_folder}.py")
+                                                              f"{path_to_watch}/{target_folder}/{target_folder}.py")
                 module = importlib.util.module_from_spec(spec)
                 spec.loader.exec_module(module)
                 load_module[target_folder] = module
