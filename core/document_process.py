@@ -113,7 +113,7 @@ def get_file(path: str, file_id: str):
     Raises:
         HTTPException: 如果文件不存在，返回 404 错误。
     """
-    file_path = f"./cache_files/{path}/{file_id}"
+    file_path = f"./files_cache/{path}/{file_id}"
     logger.debug(f"请求文件: {file_path}")
 
     if os.path.exists(file_path):
