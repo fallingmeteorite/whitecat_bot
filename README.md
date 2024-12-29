@@ -1,12 +1,29 @@
 # whitecat_bot
 
-使用说明还在写>_<
+# 使用说明
+
+## 安装
+
+```
+git clone https://github.com/fallingmeteorite/whitecat_bot.git
+
+cd whitecat_bot
+
+python -m venv venv
+
+.\venv\Scripts\Activate.ps1
+
+pip install -r requirements.txt
+```
+## 运行
+
+打开`config.yaml`文件,将`websocket_uri`,`websocket_port`改成对应软件中给出的WebSocket服务器的地址
+
+下载适配器文件夹到`plugins_adapter`文件夹,在根目录运行python app.py
 
 # 免责申明
 
 本体只含除了适配器以外的代码，适配器为了大家方便才上传的，如果不当使用适配器对我造成影响，我将删除对应的适配器
-目前提供了qq
-以后会提供dc等适配器
 使用适配器不能违反对应软件的规范,如果反馈信息过多，将会删除对应适配器
 
 1 用户不得利用本软件及服务制作、复制、发布、传播、储存含有下列内容的信息：
