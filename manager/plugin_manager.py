@@ -4,12 +4,13 @@ from typing import Callable, Dict, List, Tuple
 from common.config import config
 from common.logging import logger
 from common.message_send import send_message
-from common.module_load import load
-from manager.user_manager import tracker
+from module_manager.module_load import load
+from use_checks.user_manager import tracker
 from scheduling.thread_scheduling import add_task
-
+from core.memory_release import memory_release_decorator
 
 class PluginManager:
+    __slots__ = ['plugin_info']
     """
     插件管理器类，负责管理插件的注册和命令处理。
     """
@@ -39,6 +40,7 @@ class PluginManager:
         self.plugin_info[name] = (asynchronous, timeout_processing, commands, handler)
         logger.debug(f"FUNC 功能插件:| {name} |导入成功 FUNC")
 
+    @memory_release_decorator
     def handle_command(self, websocket, uid: int, gid: int, nickname: str, message: str, plugin_name: str) -> None:
         """
         根据已注册的插件处理命令。
@@ -79,3 +81,4 @@ if enable_hot_loading:
 
     # 启动插件文件夹监视
     asyncio.run(start_monitoring(plugin_dir, load_module, plugin_manager))
+    del load_module

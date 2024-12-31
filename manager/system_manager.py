@@ -2,11 +2,12 @@ from typing import Callable, Dict, List, Tuple
 
 from common.config import config
 from common.logging import logger
-from common.module_load import load
+from module_manager.module_load import load
 from scheduling.thread_scheduling import add_task
-
+from core.memory_release import memory_release_decorator
 
 class SystemManager:
+    __slots__ = ['system_info']
     """
     系统插件管理器类，负责管理系统插件的注册和命令处理。
     """
@@ -36,6 +37,7 @@ class SystemManager:
         self.system_info[name] = (asynchronous, timeout_processing, commands, handler)
         logger.debug(f"SYSTEM 系统插件:| {name} |导入成功 SYSTEM")
 
+    @memory_release_decorator
     def handle_command(self, websocket, uid: int, gid: int, nickname: str, message: str, system_name: str) -> None:
         """
         根据已注册的系统插件处理命令。
@@ -64,4 +66,5 @@ class SystemManager:
 
 # 加载系统插件管理器
 system_dir = config["system_dir"]
-system_manager, _ = load(system_dir, SystemManager)
+system_manager, load_module = load(system_dir, SystemManager)
+del load_module

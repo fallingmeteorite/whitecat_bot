@@ -1,11 +1,13 @@
 from typing import Optional, Tuple, Any, Dict, Callable
 
+from module_manager.module_load import load
+
 from common.config import config
 from common.logging import logger
-from common.module_load import load
-
+from core.memory_release import memory_release_decorator
 
 class AdapterManager:
+    __slots__ = ['adapter_info']
     """
     适配理器类，负责规范消息输出。
     """
@@ -31,7 +33,7 @@ class AdapterManager:
             raise ValueError("Handler must be a callable function.")
         self.adapter_info[name] = handler
         logger.debug(f"ADAPTER 适配器:| {name} |导入成功 ADAPTER|")
-
+    @memory_release_decorator
     def handle_command(self, message: Any) -> Tuple[Optional[Any], Optional[Any], Optional[Any], Optional[Any]]:
         """
         运行所有适配器，直到某个适配器返回非 None 值。
@@ -58,3 +60,4 @@ class AdapterManager:
 # 加载文件管理器
 adapter_dir = config["adapter_dir"]
 adapter_manager, load_module = load(adapter_dir, AdapterManager)
+del load_module

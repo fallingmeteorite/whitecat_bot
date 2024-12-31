@@ -2,13 +2,15 @@ import asyncio
 import time
 from typing import Callable, List, Tuple
 
+from module_manager.module_load import load
+
 from common.config import config
 from common.logging import logger
-from common.module_load import load
 from scheduling.thread_scheduling import add_task
-
+from core.memory_release import memory_release_decorator
 
 class TimerManager:
+    __slots__ = ['time_tasks']
     """
     定时器管理器类，负责管理定时任务的注册和执行。
     """
@@ -19,6 +21,7 @@ class TimerManager:
         """
         self.time_tasks: List[Tuple[str, Callable, str]] = []
 
+    @memory_release_decorator
     def handle_command(self, websocket, gid: int) -> None:
         """
         处理定时任务，启动定时器并执行任务。
@@ -67,3 +70,4 @@ if enable_hot_loading:
 
     # 启动插件文件夹监视
     asyncio.run(start_monitoring(timer_dir, load_module, timer_manager))
+    del load_module

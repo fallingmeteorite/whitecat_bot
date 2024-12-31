@@ -3,11 +3,12 @@ from typing import Callable, Dict, Tuple
 
 from common.config import config
 from common.logging import logger
-from common.module_load import load
+from module_manager.module_load import load
 from scheduling.thread_scheduling import add_task
-
+from core.memory_release import memory_release_decorator
 
 class FilterManager:
+    __slots__ = ['filter_info']
     """
     过滤器管理器类，负责管理过滤器的注册和消息处理。
     """
@@ -39,6 +40,7 @@ class FilterManager:
         self.filter_info[filter_name] = (filter_rule, asynchronous, timeout_processing, handler)
         logger.debug(f"FILTERS 过滤器:| {filter_name} |导入成功 FILTERS")
 
+    @memory_release_decorator
     def handle_message(self, websocket, uid: int, gid: int, message_dict: dict, message: str, filter_name: str) -> None:
         """
         根据已注册的过滤器处理消息。
@@ -76,3 +78,4 @@ if enable_hot_loading:
 
     # 启动插件文件夹监视
     asyncio.run(start_monitoring(filter_dir, load_module, filter_manager))
+    del load_module
