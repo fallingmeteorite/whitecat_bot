@@ -79,7 +79,7 @@ def enable_plugin(plugin_type: str, plugin_name: str) -> None:
         "文件接收": config["file_dir"]
     }
     if plugin_type in plugin_dirs:
-        source_path = f"./disuse_plugins/{plugin_name}"
+        source_path = f"./plugins_disuse/{plugin_name}"
         target_path = os.path.join(plugin_dirs[plugin_type], plugin_name)
         if os.path.exists(source_path):
             shutil.move(source_path, target_path)
@@ -101,7 +101,7 @@ def disable_plugin(plugin_type: str, plugin_name: str) -> None:
     }
     if plugin_type in plugin_dirs:
         source_path = os.path.join(plugin_dirs[plugin_type], plugin_name)
-        target_path = f"./disuse_plugins/{plugin_name}"
+        target_path = f"./plugins_disuse/{plugin_name}"
         if os.path.exists(source_path):
             shutil.move(source_path, target_path)
 

@@ -16,7 +16,7 @@ def accept_control(websocket, uid: str, nickname: str, gid: str, message_dict: D
         gid: 群组 ID。
         message_dict: 消息字典，包含发送的消息。
     """
-    from common.message_process import MessageProcessor
+    from core.message_process import MessageProcessor
 
     if "help" in message_dict:
         show_help(websocket, uid, gid)
