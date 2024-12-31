@@ -13,6 +13,7 @@ from log import logger
 
 import os
 import sys
+
 from loguru import logger
 
 # 获取当前工作目录
@@ -49,11 +50,11 @@ try:
     logger.add(
         log_file_path,
         rotation='12 hours',  # 每 12 小时轮换一次日志文件
-        retention='7 days',   # 保留最近 7 天的日志文件
-        level=LOG_LEVEL,      # 设置日志等级
-        enqueue=True,         # 启用线程安全
+        retention='7 days',  # 保留最近 7 天的日志文件
+        level=LOG_LEVEL,  # 设置日志等级
+        enqueue=True,  # 启用线程安全
         format=default_format,  # 使用带颜色的日志格式
-        compression="zip",    # 压缩旧日志文件
+        compression="zip",  # 压缩旧日志文件
     )
 except Exception as e:
     # 如果日志文件设置失败，输出错误信息并使用标准输出作为备份
