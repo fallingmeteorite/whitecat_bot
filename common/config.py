@@ -1,4 +1,5 @@
 import yaml
+
 from common.logging import logger
 
 # 全局配置字典，用于存储加载的配置
