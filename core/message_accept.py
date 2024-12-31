@@ -1,4 +1,5 @@
 import asyncio
+import gc
 import json
 import os
 import signal
@@ -11,9 +12,10 @@ import websockets.exceptions
 
 from common.config import config
 from common.logging import logger
-from common.message_process import message_processor
 from common.message_send import send_message
+from core.message_process import message_processor
 from manager.timer_manager import timer_manager
+from core.memory_release import memory_release_decorator
 
 
 class WebSocketManager:
@@ -32,7 +34,7 @@ class WebSocketManager:
         # 注册信号处理函数
         signal.signal(signal.SIGINT, self.handle_signal)  # 处理 Ctrl+C
         signal.signal(signal.SIGTERM, self.handle_signal)  # 处理终止信号
-
+    @memory_release_decorator
     async def handle_websocket(self, client_id: int):
         """
         处理 WebSocket 连接的异步函数。
@@ -62,6 +64,7 @@ class WebSocketManager:
                 # 接收并处理消息
                 message = json.loads(await self.websocket.recv())
                 message_processor.add_message(self.websocket, message)
+                gc.collect()
         except Exception as error:
             logger.error(f"发生错误: {error}")
         finally:
@@ -134,7 +137,7 @@ class WebSocketManager:
         """
         logger.info(f"接收到信号 {signum}，停止应用...")
         self.alive = False
-        sys.exit(0)
+        sys.exit()
 
 
 def file_monitor():
