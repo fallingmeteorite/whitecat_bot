@@ -1,10 +1,12 @@
 import json
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 from common.config import config
 
 
 class UserUsageTracker:
+    __slots__ = ['filename', 'data']
+
     """
     用户使用次数跟踪器类，负责管理用户使用次数的记录和检查。
     """
@@ -17,28 +19,27 @@ class UserUsageTracker:
             filename: 存储用户使用次数的文件路径。
         """
         self.filename = filename
-        self.data: List[Dict[str, int]] = self.load_data()
+        self.data: Dict[str, int] = self.load_data()
 
-    def load_data(self) -> List[Dict[str, int]]:
+    def load_data(self) -> Dict[str, int]:
         """
         从文件中加载用户使用次数数据。
 
         Returns:
-            List[Dict[str, int]]: 用户使用次数数据列表。
+            Dict[str, int]: 用户使用次数数据字典，键为用户 ID，值为使用次数。
         """
         try:
             with open(self.filename, 'r') as file:
-                return [json.loads(line) for line in file]
+                return {k: v for line in file for k, v in json.loads(line).items()}
         except FileNotFoundError:
-            return []
+            return {}
 
     def save_data(self) -> None:
         """
         将用户使用次数数据保存到文件中。
         """
         with open(self.filename, 'w') as file:
-            for entry in self.data:
-                file.write(json.dumps(entry) + '\n')
+            json.dump(self.data, file)
 
     def get_uid_count(self, uid: str) -> Optional[int]:
         """
@@ -50,11 +51,7 @@ class UserUsageTracker:
         Returns:
             Optional[int]: 用户使用次数，如果用户不存在则返回 None。
         """
-        for entry in self.data:
-            for item in entry.items():
-                if str(item[0]) == str(uid):
-                    return item[1]
-        return None
+        return self.data.get(uid)
 
     def use_detections(self, uid: str, gid: str) -> bool:
         """
@@ -69,15 +66,15 @@ class UserUsageTracker:
         """
         if gid in config.get("use_restricted_groups", []):
             count = self.get_uid_count(uid)
+            max_uses = config.get("maximum_number_uses", 0)
+
             if count is None:
-                self.data.append({uid: 1})
-            elif count >= config.get("maximum_number_uses", 0):
+                self.data[uid] = 1
+            elif count >= max_uses:
                 return False
             else:
-                for i in range(len(self.data)):
-                    for item in self.data[i].items():
-                        if str(item[0]) == str(uid):
-                            self.data[i][str(uid)] = count + 1
+                self.data[uid] = count + 1
+
             self.save_data()
             return True
         return True
