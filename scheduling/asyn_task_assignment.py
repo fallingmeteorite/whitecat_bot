@@ -14,6 +14,10 @@ class AsynTask:
     """
     异步任务管理器类，负责管理异步任务的调度、执行和监控。
     """
+    __slots__ = [
+        'loop', 'task_queue', 'condition', 'scheduler_started', 'scheduler_stop_event',
+        'task_details', 'running_tasks', 'error_logs'
+    ]
 
     def __init__(self):
         """
@@ -60,11 +64,11 @@ class AsynTask:
             self.task_details[task_id]["status"] = "failed"
             self.log_error(task_id, e)
         finally:
+            logger.debug(f"主动回收内存为:{gc.collect()}")
             self.task_details[task_id]["end_time"] = time.monotonic()
             # 如果任务状态为 "running"，则将其设置为 "completed"
             if self.task_details[task_id]["status"] == "running":
                 self.task_details[task_id]["status"] = "completed"
-            logger.debug(f"主动回收内存中信息：{gc.collect()}")
             # 从运行任务字典中移除该任务
             if task_id in self.running_tasks:
                 del self.running_tasks[task_id]

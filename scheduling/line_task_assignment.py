@@ -15,6 +15,10 @@ class LineTask:
     """
     线性任务管理器类，负责管理线性任务的调度、执行和监控。
     """
+    __slots__ = [
+        'task_queue', 'running_tasks', 'task_details', 'lock', 'condition',
+        'scheduler_started', 'scheduler_stop_event', 'error_logs'
+    ]
 
     def __init__(self):
         """
@@ -95,6 +99,8 @@ class LineTask:
             logger.warning(f"线性队列任务 | {task_id} | 超时, 强制结束")
             future.cancel()
             self.update_task_status(task_id, "timeout")
+        finally:
+            logger.debug(f"主动回收内存为:{gc.collect()}")
 
     def task_done(self, task_id: str, future: ThreadPoolExecutor) -> None:
         """
@@ -104,7 +110,6 @@ class LineTask:
             task_id: 任务 ID。
             future: 任务对应的 future 对象。
         """
-        logger.debug(f"主动回收内存中信息：{gc.collect()}")
         try:
             future.result()  # 获取任务结果，如果有异常会在这里抛出
             self.update_task_status(task_id, "completed")
@@ -112,6 +117,8 @@ class LineTask:
             logger.error(f"线性任务 {task_id} 执行失败: {e}")
             self.update_task_status(task_id, "failed")
             self.log_error(task_id, e)
+        finally:
+            logger.debug(f"主动回收内存为:{gc.collect()}")
 
     def update_task_status(self, task_id: str, status: str) -> None:
         """
