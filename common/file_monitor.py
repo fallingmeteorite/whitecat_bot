@@ -2,8 +2,9 @@ import threading
 import time
 from functools import lru_cache
 
+from module_manager.module_load import reload
+
 from common.logging import logger
-from common.module_load import reload
 from watchdog.observers import Observer
 from watchdog.utils.events import FileSystemEventHandler
 
@@ -66,7 +67,7 @@ class FolderChangeHandler(FileSystemEventHandler):
         # 将路径中的反斜杠替换为斜杠，并按斜杠分割，取第三部分作为文件夹名称
         return path.replace("\\", "/").split('/')[2]
 
-    @rate_limit(4)
+    @rate_limit(2)
     def handle_folder_change(self, original_dir, target_dir=None, type_operation=None):
         """
         处理文件夹变化的通用逻辑，根据操作类型调用 `reload` 函数。
@@ -92,7 +93,7 @@ class FolderChangeHandler(FileSystemEventHandler):
             # 如果是修改或创建操作，调用 reload
             reload(self.path_to_watch, original_folder, True, None, self.observer, self.load_module, self.manager)
 
-    @rate_limit(4)
+    @rate_limit(2)
     def on_deleted(self, event):
         """
         处理文件夹或文件删除事件。
@@ -101,7 +102,7 @@ class FolderChangeHandler(FileSystemEventHandler):
         """
         self.handle_folder_change(event.src_path, type_operation="deleted")
 
-    @rate_limit(4)
+    @rate_limit(2)
     def on_created(self, event):
         """
         处理文件夹或文件创建事件。
@@ -110,7 +111,7 @@ class FolderChangeHandler(FileSystemEventHandler):
         """
         self.handle_folder_change(event.src_path, type_operation="created")
 
-    @rate_limit(4)
+    @rate_limit(2)
     def on_modified(self, event):
         """
         处理文件夹或文件修改事件。
@@ -119,7 +120,7 @@ class FolderChangeHandler(FileSystemEventHandler):
         """
         self.handle_folder_change(event.src_path, type_operation="modified")
 
-    @rate_limit(4)
+    @rate_limit(2)
     def on_moved(self, event):
         """
         处理文件夹或文件移动事件。
