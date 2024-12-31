@@ -18,7 +18,6 @@ class Application:
         初始化应用程序。
         """
         self.ws_thread: Optional[ThreadController] = None
-        self.fastapi_thread: Optional[ThreadController] = None
         self.start_time: Optional[datetime.datetime] = None
         self.restart_value = True
 
@@ -37,21 +36,13 @@ class Application:
         主函数用于同时运行 WebSocket 服务器和 FastAPI 应用。
         它通过多线程来实现两者的同时运行，并在接收到键盘中断时安全地停止这两个服务。
         """
-        # 创建临时环境变量
-        os.environ['restart'] = "running"
-        os.environ['restart_fastapi'] = "running"
-        os.environ['restart_wsbot'] = "running"
-
         if not self.check_py_files():
             raise Exception("文件夹内没有可用适配器,进程退出")
 
         self.start_time = datetime.datetime.now()
 
         # 创建并运行 WebSocket 服务器线程
-        self.fastapi_thread = ThreadController("python -m core.document_process").run()
         self.ws_thread = ThreadController("python -m core.message_accept").run()
-
-        self.fastapi_thread.start()
         self.ws_thread.start()
 
         # 等待键盘中断
@@ -77,32 +68,29 @@ class Application:
         if os.path.exists("restart.txt") and self.restart_value:
             with open("restart.txt", "r") as f:
                 data = f.read().split(",")
-            if data[0] == "stop":
-                self.restart_value = False
+                state = data[0]
+                gid = data[1]
+            if state == "stop":
                 self.start_time = datetime.datetime.now()
+                self.restart_value = False
                 with open('restart_wsbot.txt', 'w') as f:
-                    pass
-                with open('restart_fastapi.txt', 'w') as f:
                     pass
                 os.remove("restart.txt")
                 logger.warning("正在重启服务...")
-
                 while True:
                     time.sleep(1.0)
-                    if not os.path.exists("restart_wsbot.txt") and not os.path.exists(
-                            "restart_fastapi.txt") and not self.restart_value:
+                    if not os.path.exists("restart_wsbot.txt"):
                         # 创建并运行 WebSocket 服务器线程
-                        self.fastapi_thread = ThreadController("python -m core.document_process").run()
                         self.ws_thread = ThreadController("python -m core.message_accept").run()
-                        self.fastapi_thread.start()
                         self.ws_thread.start()
 
                         end_time = datetime.datetime.now()
                         with open('restart.txt', 'w') as f:
-                            f.write(f"ok,{data[1]},{end_time - self.start_time}")
+                            f.write(f"ok,{gid},{end_time - self.start_time}")
                             break
                 logger.info("服务器重启完毕")
                 self.restart_value = True
+                del state, gid, data
 
 
 main = Application()
