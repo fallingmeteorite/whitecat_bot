@@ -15,7 +15,6 @@ from common.logging import logger
 from common.message_send import send_message
 from core.message_process import message_processor
 from manager.timer_manager import timer_manager
-from memory_cleanup.memory_release import memory_release_decorator
 
 
 class WebSocketManager:
@@ -35,7 +34,6 @@ class WebSocketManager:
         signal.signal(signal.SIGINT, self.handle_signal)  # 处理 Ctrl+C
         signal.signal(signal.SIGTERM, self.handle_signal)  # 处理终止信号
 
-    @memory_release_decorator
     async def handle_websocket(self, client_id: int):
         """
         处理 WebSocket 连接的异步函数。

@@ -5,6 +5,7 @@ from typing import Dict, Any, Optional
 
 from common.logging import logger
 from scheduling.thread_scheduling import asyntask, linetask
+from memory_cleanup.memory_release import memory_release_decorator
 
 # 全局插件卸载管理器
 uninstall_manager = None
@@ -65,7 +66,7 @@ def get_directories(path: str) -> list:
     """
     return [name for name in os.listdir(path) if os.path.isdir(os.path.join(path, name))]
 
-
+@memory_release_decorator
 def load(load_dir: str, Install: callable) -> tuple:
     """
     初始化加载插件（非热加载）。
@@ -97,7 +98,7 @@ def load(load_dir: str, Install: callable) -> tuple:
             logger.error(f"插件加载失败, 可能插件存在错误, 错误信息: {error}")
     return manager, load_module
 
-
+@memory_release_decorator
 def reload(path_to_watch: str, original_folder: str, reload_enable: bool, target_folder: Optional[str],
            observer: Any, load_module: Dict[str, Any], install: Any) -> None:
     """
@@ -112,7 +113,7 @@ def reload(path_to_watch: str, original_folder: str, reload_enable: bool, target
         load_module: 已加载的插件模块字典。
         install: 插件管理器实例。
     """
-    from common.file_monitor import start_monitoring
+    from module_manager.file_monitor import start_monitoring
 
     # 关闭观察者
     observer.stop()

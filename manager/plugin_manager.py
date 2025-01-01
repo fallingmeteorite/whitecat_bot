@@ -77,7 +77,7 @@ plugin_manager, load_module = load(plugin_dir, PluginManager)
 # 判断是否开启插件热加载
 enable_hot_loading = config.get("enable_hot_loading", False)
 if enable_hot_loading:
-    from common.file_monitor import start_monitoring
+    from module_manager.file_monitor import start_monitoring
 
     # 启动插件文件夹监视
     asyncio.run(start_monitoring(plugin_dir, load_module, plugin_manager))
