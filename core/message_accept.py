@@ -15,7 +15,7 @@ from common.logging import logger
 from common.message_send import send_message
 from core.message_process import message_processor
 from manager.timer_manager import timer_manager
-from core.memory_release import memory_release_decorator
+from memory_cleanup.memory_release import memory_release_decorator
 
 
 class WebSocketManager:
@@ -34,6 +34,7 @@ class WebSocketManager:
         # 注册信号处理函数
         signal.signal(signal.SIGINT, self.handle_signal)  # 处理 Ctrl+C
         signal.signal(signal.SIGTERM, self.handle_signal)  # 处理终止信号
+
     @memory_release_decorator
     async def handle_websocket(self, client_id: int):
         """
@@ -105,8 +106,6 @@ class WebSocketManager:
 
             except websockets.exceptions.ConnectionClosedError as error:
                 logger.error(f"WebSocket 连接意外关闭: {error} URL: {websocket_url}")
-            except websockets.exceptions.InvalidStatusCode as error:
-                logger.error(f"收到无效的状态码: {error} URL: {websocket_url}")
             except Exception as error:
                 logger.error(f"启动 WebSocket 服务器失败: {error} URL: {websocket_url}")
                 await asyncio.sleep(1)

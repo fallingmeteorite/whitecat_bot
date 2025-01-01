@@ -35,7 +35,7 @@ enable_hot_loading: true
 maximum_queue: 12
 
 # 用户信息储存
-user_use_file: ./user_use_count.txt
+user_use_file: ./user_use_count
 
 # 定时器发布的群聊
 timer_gids_list: [ ]

@@ -2,9 +2,9 @@ from typing import Callable, Dict, List, Tuple
 
 from common.config import config
 from common.logging import logger
-from module_manager.module_load import load
+from utils.module_manager.module_load import load
 from scheduling.thread_scheduling import add_task
-from core.memory_release import memory_release_decorator
+
 
 class SystemManager:
     __slots__ = ['system_info']
@@ -18,7 +18,8 @@ class SystemManager:
         """
         self.system_info: Dict[str, Tuple[bool, bool, List[str], Callable]] = {}
 
-    def register_system(self, name: str, asynchronous: bool, timeout_processing: bool, commands: List[str], handler: Callable) -> None:
+    def register_system(self, name: str, asynchronous: bool, timeout_processing: bool, commands: List[str],
+                        handler: Callable) -> None:
         """
         注册一个新的系统插件。
 
@@ -37,7 +38,6 @@ class SystemManager:
         self.system_info[name] = (asynchronous, timeout_processing, commands, handler)
         logger.debug(f"SYSTEM 系统插件:| {name} |导入成功 SYSTEM")
 
-    @memory_release_decorator
     def handle_command(self, websocket, uid: int, gid: int, nickname: str, message: str, system_name: str) -> None:
         """
         根据已注册的系统插件处理命令。

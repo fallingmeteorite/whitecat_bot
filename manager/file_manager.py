@@ -3,9 +3,9 @@ from typing import Callable, Dict, Tuple
 
 from common.config import config
 from common.logging import logger
-from module_manager.module_load import load
+from utils.module_manager.module_load import load
 from scheduling.thread_scheduling import add_task
-from core.memory_release import memory_release_decorator
+
 
 class FileManager:
     __slots__ = ['file_info']
@@ -37,7 +37,6 @@ class FileManager:
         self.file_info[name] = (asynchronous, timeout_processing, handler)
         logger.debug(f"FILE 文件检测:| {name} |导入成功 FILE")
 
-    @memory_release_decorator
     def handle_command(self, websocket, uid: int, gid: int, nickname: str, message_dict: dict, file: str) -> None:
         """
         处理文件命令，调度文件处理任务。

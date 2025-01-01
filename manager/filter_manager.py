@@ -3,9 +3,9 @@ from typing import Callable, Dict, Tuple
 
 from common.config import config
 from common.logging import logger
-from module_manager.module_load import load
+from utils.module_manager.module_load import load
 from scheduling.thread_scheduling import add_task
-from core.memory_release import memory_release_decorator
+
 
 class FilterManager:
     __slots__ = ['filter_info']
@@ -19,7 +19,8 @@ class FilterManager:
         """
         self.filter_info: Dict[str, Tuple[str, bool, bool, Callable]] = {}
 
-    def register_plugin(self, filter_name: str, filter_rule: str, asynchronous: bool, timeout_processing: bool, handler: Callable) -> None:
+    def register_plugin(self, filter_name: str, filter_rule: str, asynchronous: bool, timeout_processing: bool,
+                        handler: Callable) -> None:
         """
         注册一个新的过滤器。
 
@@ -40,7 +41,6 @@ class FilterManager:
         self.filter_info[filter_name] = (filter_rule, asynchronous, timeout_processing, handler)
         logger.debug(f"FILTERS 过滤器:| {filter_name} |导入成功 FILTERS")
 
-    @memory_release_decorator
     def handle_message(self, websocket, uid: int, gid: int, message_dict: dict, message: str, filter_name: str) -> None:
         """
         根据已注册的过滤器处理消息。

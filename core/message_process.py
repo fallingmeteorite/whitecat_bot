@@ -10,7 +10,7 @@ from manager.file_manager import file_manager
 from manager.filter_manager import filter_manager
 from manager.plugin_manager import plugin_manager
 from manager.system_manager import system_manager
-from use_checks.block_manager import ban_filter, ban_plugin
+from utils.block_manager import ban_filter, ban_plugin
 
 
 class MessageProcessor:

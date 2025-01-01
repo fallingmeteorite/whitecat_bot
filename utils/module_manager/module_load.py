@@ -6,8 +6,6 @@ import os
 from typing import Dict, Any, Optional, Set, List
 
 from common.logging import logger
-from core.memory_release import memory_release_decorator, unload_modules_from_folder, clear_variables_from_folder
-from module_manager.module_unload import force_unload_unused_modules
 from scheduling.thread_scheduling import asyntask, linetask
 
 # 全局插件卸载管理器
@@ -133,7 +131,6 @@ def load(load_dir: str, Install: callable) -> tuple:
     return manager, load_module
 
 
-@memory_release_decorator
 def reload(path_to_watch: str, original_folder: str, reload_enable: bool, target_folder: Optional[str],
            observer: Any, load_module: Dict[str, Any], install: Any) -> None:
     """
@@ -165,12 +162,6 @@ def reload(path_to_watch: str, original_folder: str, reload_enable: bool, target
             # 卸载插件
             module = load_module[original_folder][0]
             module.register(uninstall)
-
-            # 删除库的引用和变量
-            force_unload_unused_modules(load_module[original_folder][1])
-            folder_to_clear = f"{path_to_watch}/{original_folder}"
-            unload_modules_from_folder(folder_to_clear)
-            clear_variables_from_folder(folder_to_clear)
 
             del load_module[original_folder]
             uninstall_manager = None

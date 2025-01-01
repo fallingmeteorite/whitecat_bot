@@ -4,10 +4,10 @@ from typing import Callable, Dict, List, Tuple
 from common.config import config
 from common.logging import logger
 from common.message_send import send_message
-from module_manager.module_load import load
-from use_checks.user_manager import tracker
+from utils.module_manager.module_load import load
 from scheduling.thread_scheduling import add_task
-from core.memory_release import memory_release_decorator
+from utils.user_manager import tracker
+
 
 class PluginManager:
     __slots__ = ['plugin_info']
@@ -21,7 +21,8 @@ class PluginManager:
         """
         self.plugin_info: Dict[str, Tuple[bool, bool, List[str], Callable]] = {}
 
-    def register_plugin(self, name: str, asynchronous: bool, timeout_processing: bool, commands: List[str], handler: Callable) -> None:
+    def register_plugin(self, name: str, asynchronous: bool, timeout_processing: bool, commands: List[str],
+                        handler: Callable) -> None:
         """
         注册一个新的插件。
 
@@ -40,7 +41,6 @@ class PluginManager:
         self.plugin_info[name] = (asynchronous, timeout_processing, commands, handler)
         logger.debug(f"FUNC 功能插件:| {name} |导入成功 FUNC")
 
-    @memory_release_decorator
     def handle_command(self, websocket, uid: int, gid: int, nickname: str, message: str, plugin_name: str) -> None:
         """
         根据已注册的插件处理命令。

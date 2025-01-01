@@ -1,4 +1,5 @@
-uvicorn==0.29.0
-fastapi==0.110.0
-starlette==0.36.3
-websocket-client==1.7.0
+colorama==0.4.6
+logger==1.4
+psutil==6.1.1
+websockets==14.1
+pyyaml==6.0.2

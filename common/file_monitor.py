@@ -2,7 +2,7 @@ import threading
 import time
 from functools import lru_cache
 
-from module_manager.module_load import reload
+from utils.module_manager.module_load import reload
 
 from common.logging import logger
 from watchdog.observers import Observer
