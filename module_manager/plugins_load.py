@@ -158,7 +158,6 @@ def reload(path_to_watch: str, original_folder: str, reload_enable: bool, target
 
                 if hasattr(module, 'register'):
                     module.register(install)
-                del module, spec, imports
 
     except Exception as error:
         logger.error(f"插件加载出现问题, 请确认插件是否存在错误, 报错信息: {error}")
