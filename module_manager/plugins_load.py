@@ -1,9 +1,7 @@
-import ast
 import asyncio
-import gc
 import importlib.util
 import os
-from typing import Dict, Any, Optional, Set, List
+from typing import Dict, Any, Optional
 
 from common.logging import logger
 from scheduling.thread_scheduling import asyntask, linetask
@@ -55,32 +53,6 @@ class PluginUninstall:
             linetask.force_stop_task(name)
 
 
-def extract_imports(file_path: str) -> List[str]:
-    """
-    从 Python 文件中提取所有导入的模块。
-
-    Args:
-        file_path (str): Python 文件的路径。
-
-    Returns:
-        List[str]: 排序后的导入模块列表。
-    """
-    with open(file_path, "r", encoding="utf-8") as file:
-        tree = ast.parse(file.read(), filename=file_path)
-
-    imports: Set[str] = set()
-
-    for node in ast.iter_child_nodes(tree):
-        if isinstance(node, ast.Import):
-            for alias in node.names:
-                imports.add(alias.name)
-        elif isinstance(node, ast.ImportFrom):
-            module = node.module
-            imports.add(module)
-
-    return sorted(imports)
-
-
 def get_directories(path: str) -> list:
     """
     获取指定文件夹内的所有子文件夹。
@@ -116,18 +88,13 @@ def load(load_dir: str, Install: callable) -> tuple:
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
 
-            # 写入加载的插件信息
-            imports = extract_imports(f"{load_dir}/{folder}/{folder}.py")
-            load_module[folder] = [module, imports]
+            load_module[folder] = module
 
             # 检查并注册插件
             if hasattr(module, 'register'):
                 module.register(manager)
-            del module, spec, imports
         except Exception as error:
             logger.error(f"插件加载失败, 可能插件存在错误, 错误信息: {error}")
-        finally:
-            logger.debug(f"主动回收内存为:{gc.collect()}")
     return manager, load_module
 
 
@@ -174,13 +141,11 @@ def reload(path_to_watch: str, original_folder: str, reload_enable: bool, target
                 module = importlib.util.module_from_spec(spec)
                 spec.loader.exec_module(module)
                 # 写入加载的插件信息
-                imports = extract_imports(f"{path_to_watch}/{original_folder}/{original_folder}.py")
-                load_module[original_folder] = [module, imports]
+
+                load_module[original_folder] = module
 
                 if hasattr(module, 'register'):
                     module.register(install)
-                del module, spec, imports
-
 
         else:  # 重命名操作
             if reload_enable:
@@ -189,8 +154,7 @@ def reload(path_to_watch: str, original_folder: str, reload_enable: bool, target
                                                               f"{path_to_watch}/{target_folder}/{target_folder}.py")
                 module = importlib.util.module_from_spec(spec)
                 spec.loader.exec_module(module)
-                imports = extract_imports(f"{path_to_watch}/{target_folder}/{target_folder}.py")
-                load_module[target_folder] = [module, imports]
+                load_module[target_folder] = module
 
                 if hasattr(module, 'register'):
                     module.register(install)
@@ -199,7 +163,6 @@ def reload(path_to_watch: str, original_folder: str, reload_enable: bool, target
     except Exception as error:
         logger.error(f"插件加载出现问题, 请确认插件是否存在错误, 报错信息: {error}")
     finally:
-        logger.debug(f"主动回收内存为:{gc.collect()}")
         # 重新启动文件监视器
         logger.debug("插件加载完毕, 观察者已开启, 可以修改插件文件夹")
         asyncio.run(start_monitoring(path_to_watch, load_module, install))

@@ -4,7 +4,7 @@ from typing import Callable, Dict, List, Tuple
 from common.config import config
 from common.logging import logger
 from common.message_send import send_message
-from module_manager.module_load import load
+from module_manager.plugins_load import load
 from scheduling.thread_scheduling import add_task
 from utils.user_manager import tracker
 

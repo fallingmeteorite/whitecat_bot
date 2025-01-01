@@ -3,7 +3,7 @@ from typing import Dict, List
 from common.config import config
 from common.logging import logger
 from common.message_send import send_message
-from module_manager.module_load import get_directories
+from module_manager.plugins_load import get_directories
 
 SYSTEM_NAME = "插件展示"  # 自定义插件名称
 
