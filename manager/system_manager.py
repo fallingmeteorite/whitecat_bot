@@ -2,7 +2,7 @@ from typing import Callable, Dict, List, Tuple
 
 from common.config import config
 from common.logging import logger
-from utils.module_manager.module_load import load
+from module_manager.module_load import load
 from scheduling.thread_scheduling import add_task
 
 

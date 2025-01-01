@@ -2,7 +2,7 @@ from typing import Optional, Tuple, Any, Dict, Callable
 
 from common.config import config
 from common.logging import logger
-from utils.module_manager.module_load import load
+from module_manager.module_load import load
 
 
 class AdapterManager:
