@@ -151,16 +151,21 @@ class AsynTask:
         with self.condition:
             self.condition.notify_all()
 
-        # 强制取消所有正在运行的任务
-        for task_id, future in self.running_tasks.items():
-            future.cancel()
-            logger.warning(f"任务 {task_id} 已被强制取消")
+        # 将 WeakValueDictionary 转换为普通字典，避免在遍历时字典大小发生变化
+        running_tasks = dict(self.running_tasks)
 
-        # 停止事件循环（防止事件循环还没开启就结束会引发报错）
-        try:
-            self.loop.call_soon_threadsafe(self.loop.stop)
-        except:
-            pass
+        # 强制取消所有正在运行的任务
+        for task_id, future in running_tasks.items():
+            if not future.done():  # 检查任务是否已完成
+                future.cancel()
+                logger.warning(f"任务 {task_id} 已被强制取消")
+
+        # 停止事件循环
+        if self.loop.is_running():  # 确保事件循环正在运行
+            try:
+                self.loop.call_soon_threadsafe(self.loop.stop)
+            except Exception as e:
+                logger.error(f"停止事件循环时发生错误: {e}")
 
     def get_queue_info(self) -> Dict:
         """

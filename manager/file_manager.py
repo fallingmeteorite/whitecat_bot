@@ -61,7 +61,7 @@ class FileManager:
             uid,
             nickname,
             gid,
-            message_dict["message"][0]["data"]["file_id"]
+            message_dict["message"]["data"]["file_id"]
         )
 
 
