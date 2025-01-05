@@ -5,9 +5,11 @@ import queue
 import threading
 import time
 from typing import Dict, List, Optional, Tuple, Callable
+from weakref import WeakValueDictionary
 
 from common.config import config
 from common.logging import logger
+from memory_cleanup.memory_release import simple_memory_release_decorator
 
 
 class AsynTask:
@@ -22,6 +24,7 @@ class AsynTask:
     def __init__(self):
         """
         初始化异步任务管理器。
+
         """
         self.loop: Optional[asyncio.AbstractEventLoop] = None
         self.task_queue = queue.Queue()  # 任务队列
@@ -29,9 +32,10 @@ class AsynTask:
         self.scheduler_started = False  # 调度线程是否已启动
         self.scheduler_stop_event = threading.Event()  # 调度线程停止事件
         self.task_details: Dict[str, Dict] = {}  # 任务详细信息
-        self.running_tasks: Dict[str, asyncio.Task] = {}  # 正在运行的任务
+        self.running_tasks: WeakValueDictionary[str, asyncio.Task] = WeakValueDictionary()  # 使用弱引用减少内存占用
         self.error_logs: List[Dict] = []  # 错误日志，最多保留 10 条
 
+    @simple_memory_release_decorator
     async def execute_task(self, task: Tuple[bool, str, Callable, Tuple, Dict]) -> None:
         """
         执行异步任务。
@@ -63,6 +67,7 @@ class AsynTask:
             logger.error(f"异步任务 {task_id} 执行失败: {e}")
             self.task_details[task_id]["status"] = "failed"
             self.log_error(task_id, e)
+
         finally:
             logger.debug(f"主动回收内存为:{gc.collect()}")
             self.task_details[task_id]["end_time"] = time.monotonic()
@@ -154,7 +159,7 @@ class AsynTask:
         # 停止事件循环（防止事件循环还没开启就结束会引发报错）
         try:
             self.loop.call_soon_threadsafe(self.loop.stop)
-        except Exception:
+        except:
             pass
 
     def get_queue_info(self) -> Dict:

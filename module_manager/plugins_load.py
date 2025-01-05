@@ -4,8 +4,9 @@ import os
 from typing import Dict, Any, Optional
 
 from common.logging import logger
-from scheduling.thread_scheduling import asyntask, linetask
 from memory_cleanup.memory_release import memory_release_decorator
+from module_manager.timer import trigger_timer
+from scheduling.thread_scheduling import asyntask, linetask
 
 # 全局插件卸载管理器
 uninstall_manager = None
@@ -66,6 +67,7 @@ def get_directories(path: str) -> list:
     """
     return [name for name in os.listdir(path) if os.path.isdir(os.path.join(path, name))]
 
+
 @memory_release_decorator
 def load(load_dir: str, Install: callable) -> tuple:
     """
@@ -98,6 +100,7 @@ def load(load_dir: str, Install: callable) -> tuple:
             logger.error(f"插件加载失败, 可能插件存在错误, 错误信息: {error}")
     return manager, load_module
 
+
 @memory_release_decorator
 def reload(path_to_watch: str, original_folder: str, reload_enable: bool, target_folder: Optional[str],
            observer: Any, load_module: Dict[str, Any], install: Any) -> None:
@@ -127,8 +130,10 @@ def reload(path_to_watch: str, original_folder: str, reload_enable: bool, target
     try:
         # 处理插件加载和卸载逻辑
         if original_folder in load_module:
+            # 开启定时器
+            trigger_timer()
             # 卸载插件
-            module = load_module[original_folder][0]
+            module = load_module[original_folder]
             module.register(uninstall)
 
             del load_module[original_folder]
@@ -155,6 +160,7 @@ def reload(path_to_watch: str, original_folder: str, reload_enable: bool, target
                                                               f"{path_to_watch}/{target_folder}/{target_folder}.py")
                 module = importlib.util.module_from_spec(spec)
                 spec.loader.exec_module(module)
+
                 load_module[target_folder] = module
 
                 if hasattr(module, 'register'):

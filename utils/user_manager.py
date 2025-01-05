@@ -1,4 +1,4 @@
-import shelve
+import json
 from typing import Dict, Optional
 
 from common.config import config
@@ -29,18 +29,17 @@ class UserUsageTracker:
             Dict[str, int]: 用户使用次数数据字典，键为用户 ID，值为使用次数。
         """
         try:
-            with shelve.open(self.filename) as db:
-                return {k: v for k, v in db.items()}
-        except FileNotFoundError:
+            with open(self.filename, 'r', encoding='utf-8') as file:
+                return json.load(file)
+        except (FileNotFoundError, json.JSONDecodeError):
             return {}
 
     def save_data(self) -> None:
         """
         将用户使用次数数据保存到文件中。
         """
-        with shelve.open(self.filename) as db:
-            for k, v in self.data.items():
-                db[k] = v
+        with open(self.filename, 'w', encoding='utf-8') as file:
+            json.dump(self.data, file, ensure_ascii=False, indent=4)
 
     def get_uid_count(self, uid: str) -> Optional[int]:
         """

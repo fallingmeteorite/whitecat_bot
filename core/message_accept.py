@@ -148,7 +148,7 @@ def file_monitor():
                 os.kill(os.getpid(), signal.SIGTERM)
                 os.remove("restart_wsbot.txt")
                 break
-            time.sleep(2)  # 每隔2秒检查一次文件
+            time.sleep(2.0)  # 每隔2秒检查一次文件
         except KeyboardInterrupt:
             break
 

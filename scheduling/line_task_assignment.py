@@ -9,7 +9,7 @@ from typing import Callable, Dict, List, Tuple
 
 from common.config import config
 from common.logging import logger
-
+from memory_cleanup.memory_release import simple_memory_release_decorator
 
 class LineTask:
     """
@@ -33,6 +33,7 @@ class LineTask:
         self.scheduler_stop_event = threading.Event()  # 调度线程停止事件
         self.error_logs: List[Dict] = []  # 错误日志，最多保留 10 条
 
+    @simple_memory_release_decorator
     def execute_task(self, task: Tuple[bool, str, Callable, Tuple, Dict]) -> None:
         """
         执行线性任务。

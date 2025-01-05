@@ -1,7 +1,7 @@
 import asyncio
 from datetime import datetime, timedelta, time
 
-from common import send_message  # 导入日志模块用于记录日志,导入发送消息的函数
+from common.message_send import send_message  # 导入日志模块用于记录日志,导入发送消息的函数
 
 
 def main(websocket, gid_all):
