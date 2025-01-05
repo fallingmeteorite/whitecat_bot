@@ -68,7 +68,7 @@ def del_cache(websocket, uid: str, nickname: str, gid: str, message_dict: Dict) 
         send_message(websocket, uid, gid, message="你没有权限执行这条命令!")
         return
 
-    folder_path_list = ["log", "cache_files/noob", "cache_files/tmp"]
+    folder_path_list = ["log"]
 
     if "temp" in message:
         for folder_path in folder_path_list:
