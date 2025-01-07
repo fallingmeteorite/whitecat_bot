@@ -40,9 +40,9 @@ class SimpleModuleLoader:
 
         # 创建模块对象
         module = types.ModuleType(self.module_name)
-        module.__file__ = self.module_path  # 设置模块文件路径
-        module.__package__ = ""  # 设置包名为空
-        module.__name__ = self.module_name  # 设置模块名称
+        module.__file__ = self.module_path
+        module.__package__ = ""
+        module.__name__ = self.module_name
         module.__loader__ = weakref.ref(self)()  # 使用弱引用设置加载器为当前对象
 
         # 将模块添加到 sys.modules
@@ -50,7 +50,11 @@ class SimpleModuleLoader:
 
         # 编译并执行模块代码
         compiled_code = compile(module_code, self.module_path, "exec")
-        exec(compiled_code, module.__dict__)
+
+        try:
+            exec(compiled_code, module.__dict__)
+        except:
+            pass
 
         logger.debug(f"模块 '{self.module_name}' 加载成功")
         return module
