@@ -3,13 +3,15 @@ import gc
 import queue
 import threading
 import time
-from concurrent.futures import ThreadPoolExecutor, TimeoutError
+from concurrent.futures import ThreadPoolExecutor
 from functools import partial
 from typing import Callable, Dict, List, Tuple
+from weakref import WeakValueDictionary
 
-from common.config import config
 from common.logging import logger
-from memory_cleanup.memory_release import simple_memory_release_decorator
+from config.config import config
+from memory_management.memory_release import simple_memory_release_decorator
+
 
 class LineTask:
     """
@@ -20,12 +22,12 @@ class LineTask:
         'scheduler_started', 'scheduler_stop_event', 'error_logs'
     ]
 
-    def __init__(self):
+    def __init__(self) -> None:
         """
         初始化线性任务管理器。
         """
         self.task_queue = queue.Queue()  # 任务队列
-        self.running_tasks: Dict[str, ThreadPoolExecutor] = {}  # 正在执行的任务
+        self.running_tasks: WeakValueDictionary[str, ThreadPoolExecutor] = WeakValueDictionary()  # 正在执行的任务
         self.task_details: Dict[str, Dict] = {}  # 任务详细信息
         self.lock = threading.Lock()  # 锁，用于保护对共享资源的访问
         self.condition = threading.Condition()  # 条件变量，用于线程同步
@@ -38,8 +40,7 @@ class LineTask:
         """
         执行线性任务。
 
-        Args:
-            task: 任务元组，包含超时处理标志、任务 ID、任务函数、位置参数和关键字参数。
+        :param task: 任务元组，包含超时处理标志、任务 ID、任务函数、位置参数和关键字参数。
         """
         _, task_id, func, args, kwargs = task
         logger.debug(f"开始运行线性任务, 线性任务名称: {task_id}")
@@ -90,26 +91,24 @@ class LineTask:
         """
         监控任务超时。
 
-        Args:
-            task_id: 任务 ID。
-            future: 任务对应的 future 对象。
+        :param task_id: 任务 ID。
+        :param future: 任务对应的 future 对象。
         """
         try:
             future.result(timeout=config["watch_dog_time"])
-        except TimeoutError:
+        except Exception:
             logger.warning(f"线性队列任务 | {task_id} | 超时, 强制结束")
             future.cancel()
             self.update_task_status(task_id, "timeout")
         finally:
-            logger.debug(f"主动回收内存为:{gc.collect()}")
+            logger.debug(f"主动回收内存为: {gc.collect()}")
 
     def task_done(self, task_id: str, future: ThreadPoolExecutor) -> None:
         """
         任务完成后的回调函数。
 
-        Args:
-            task_id: 任务 ID。
-            future: 任务对应的 future 对象。
+        :param task_id: 任务 ID。
+        :param future: 任务对应的 future 对象。
         """
         try:
             future.result()  # 获取任务结果，如果有异常会在这里抛出
@@ -119,15 +118,14 @@ class LineTask:
             self.update_task_status(task_id, "failed")
             self.log_error(task_id, e)
         finally:
-            logger.debug(f"主动回收内存为:{gc.collect()}")
+            logger.debug(f"主动回收内存为: {gc.collect()}")
 
     def update_task_status(self, task_id: str, status: str) -> None:
         """
         更新任务状态。
 
-        Args:
-            task_id: 任务 ID。
-            status: 任务状态。
+        :param task_id: 任务 ID。
+        :param status: 任务状态。
         """
         with self.lock:
             if task_id in self.running_tasks:
@@ -139,9 +137,8 @@ class LineTask:
         """
         记录任务执行过程中的错误信息。
 
-        Args:
-            task_id: 任务 ID。
-            exception: 异常对象。
+        :param task_id: 任务 ID。
+        :param exception: 异常对象。
         """
         error_info = {
             "task_id": task_id,
@@ -158,12 +155,11 @@ class LineTask:
         """
         向任务队列中添加任务。
 
-        Args:
-            timeout_processing: 是否启用超时处理。
-            task_id: 任务 ID。
-            func: 任务函数。
-            args: 任务函数的位置参数。
-            kwargs: 任务函数的关键字参数。
+        :param timeout_processing: 是否启用超时处理。
+        :param task_id: 任务 ID。
+        :param func: 任务函数。
+        :param args: 任务函数的位置参数。
+        :param kwargs: 任务函数的关键字参数。
         """
         if self.task_queue.qsize() <= config["maximum_queue"]:
             self.task_queue.put((timeout_processing, task_id, func, args, kwargs))

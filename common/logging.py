@@ -13,8 +13,8 @@ from log import logger
 
 import os
 import sys
-
-from loguru import logger
+import weakref
+from loguru import logger as loguru_logger
 
 # 获取当前工作目录
 current_dir = os.getcwd()
@@ -42,12 +42,15 @@ plain_format: str = (
 # 默认日志等级
 LOG_LEVEL = "INFO"
 
+# 使用弱引用存储日志记录器
+_logger_ref = weakref.ref(loguru_logger)
+
 try:
     # 使用绝对路径设置日志文件路径
     log_file_path = os.path.join(log_dir, 'data_{time:YYYY_MM_DD}.log')
 
     # 添加日志文件输出
-    logger.add(
+    _logger_ref().add(
         log_file_path,
         rotation='12 hours',  # 每 12 小时轮换一次日志文件
         retention='7 days',  # 保留最近 7 天的日志文件
@@ -59,10 +62,10 @@ try:
 except Exception as e:
     # 如果日志文件设置失败，输出错误信息并使用标准输出作为备份
     print(f"Error setting up logging: {e}", file=sys.stderr)
-    logger.add(sys.stderr, level=LOG_LEVEL, format=plain_format)
+    _logger_ref().add(sys.stderr, level=LOG_LEVEL, format=plain_format)
 
 # 日志记录器对象
-logger = logger
+logger = _logger_ref()
 """日志记录器对象。
 
 默认信息:

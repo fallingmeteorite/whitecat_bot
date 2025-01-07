@@ -1,7 +1,7 @@
 import json
 from typing import Dict, Optional
 
-from common.config import config
+from config.config import config
 
 
 class UserUsageTracker:
@@ -19,9 +19,9 @@ class UserUsageTracker:
             filename: 存储用户使用次数的文件路径。
         """
         self.filename = filename
-        self.data: Dict[str, int] = self.load_data()
+        self.data: Dict[str, int] = self._load_data()
 
-    def load_data(self) -> Dict[str, int]:
+    def _load_data(self) -> Dict[str, int]:
         """
         从文件中加载用户使用次数数据。
 
@@ -34,14 +34,14 @@ class UserUsageTracker:
         except (FileNotFoundError, json.JSONDecodeError):
             return {}
 
-    def save_data(self) -> None:
+    def _save_data(self) -> None:
         """
         将用户使用次数数据保存到文件中。
         """
         with open(self.filename, 'w', encoding='utf-8') as file:
             json.dump(self.data, file, ensure_ascii=False, indent=4)
 
-    def get_uid_count(self, uid: str) -> Optional[int]:
+    def get_usage_count(self, uid: str) -> Optional[int]:
         """
         获取指定用户的使用次数。
 
@@ -53,7 +53,7 @@ class UserUsageTracker:
         """
         return self.data.get(uid)
 
-    def use_detections(self, uid: str, gid: str) -> bool:
+    def can_use_detection(self, uid: str, gid: str) -> bool:
         """
         检查用户使用次数是否超过限制。
 
@@ -64,19 +64,27 @@ class UserUsageTracker:
         Returns:
             bool: 如果用户使用次数未超过限制，返回 True；否则返回 False。
         """
-        if gid in config.get("use_restricted_groups", []):
-            count = self.get_uid_count(uid)
-            max_uses = config.get("maximum_number_uses", 0)
-
-            if count is None:
-                self.data[uid] = 1
-            elif count >= max_uses:
-                return False
-            else:
-                self.data[uid] = count + 1
-
-            self.save_data()
+        # 检查群组是否在使用限制列表中
+        if gid not in config.get("use_restricted_groups", []):
             return True
+
+        # 获取用户当前使用次数和最大允许次数
+        current_count = self.get_usage_count(uid)
+        max_uses = config.get("maximum_number_uses", 0)
+
+        # 如果用户不存在于记录中，初始化使用次数为 1
+        if current_count is None:
+            self.data[uid] = 1
+            self._save_data()
+            return True
+
+        # 检查使用次数是否超过限制
+        if current_count >= max_uses:
+            return False
+
+        # 增加使用次数并保存数据
+        self.data[uid] = current_count + 1
+        self._save_data()
         return True
 
 

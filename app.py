@@ -2,18 +2,20 @@ import datetime
 import os
 import time
 from typing import Optional
+import weakref
 
-from common.config import config
 from common.logging import logger
-from utils.thread_creation import ThreadController
-from  memory_cleanup.memory_release import simple_memory_release_decorator
+from config.config import config
+from memory_management.memory_release import simple_memory_release_decorator
+from thread_creation.thread_creation import ThreadController
+
 
 class Application:
     """
     应用程序类，负责管理 WebSocket 服务器和 FastAPI 应用的启动、停止和重启。
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """
         初始化应用程序。
         """
@@ -23,13 +25,11 @@ class Application:
 
     def check_py_files(self) -> bool:
         """
-        Returns:
-            bool: 如果存在文件返回 True，否则返回 False。
+        检查适配器目录下是否存在可用的 Python 文件。
+
+        :return: 如果存在有效的适配器文件返回 True，否则返回 False。
         """
-        # 检查路径是否存在
-        if len(os.listdir(config["adapter_dir"])) - 2 == 0:
-            return False
-        return True
+        return len(os.listdir(config["adapter_dir"])) > 2
 
     def run(self) -> None:
         """
@@ -37,7 +37,7 @@ class Application:
         它通过多线程来实现两者的同时运行，并在接收到键盘中断时安全地停止这两个服务。
         """
         if not self.check_py_files():
-            raise Exception("文件夹内没有可用适配器,进程退出")
+            raise Exception("文件夹内没有可用适配器, 进程退出")
 
         self.start_time = datetime.datetime.now()
 
@@ -66,48 +66,42 @@ class Application:
         """
         重启 WebSocket 服务器和 FastAPI 应用。
         """
-        if os.path.exists("restart.txt") and self.restart_value:
-            with open("restart.txt", "r") as f:
-                data = f.read().split(",")
-            if data[0] == "stop":
-                self.start_time = datetime.datetime.now()
-                self.restart_value = False
-                # 发出重启指令
-                with open('restart_wsbot.txt', 'w') as f:
-                    pass
-
-                os.remove("restart.txt")
-                logger.warning("正在重启服务...")
-                while True:
-                    time.sleep(1.0)
-                    if not os.path.exists("restart_wsbot.txt"):
-                        # 创建并运行 WebSocket 服务器线程
-                        self.ws_thread = ThreadController("python -m core.message_accept").run()
-                        self.ws_thread.start()
-                        end_time = datetime.datetime.now()
-                        with open('restart.txt', 'w') as f:
-                            f.write(f"ok,{data[1]},{end_time - self.start_time}")
-                            break
-                logger.info("服务器重启完毕")
-                self.restart_value = True
-                del data, end_time
-
-        if os.path.exists("restart_ignore.txt") and self.restart_value:
-            self.restart_value = False
+        if self.should_restart("restart.txt"):
+            self.restart_service()
+            os.remove("restart.txt")
+        elif self.should_restart("restart_ignore.txt"):
+            self.restart_service()
             os.remove("restart_ignore.txt")
-            # 发出重启指令
-            with open('restart_wsbot.txt', 'w') as f:
-                pass
-            while True:
-                time.sleep(1.0)
-                if not os.path.exists("restart_wsbot.txt"):
-                    # 创建并运行 WebSocket 服务器线程
-                    self.ws_thread = ThreadController("python -m core.message_accept").run()
-                    self.ws_thread.start()
-                    break
 
-            self.restart_value = True
+    def should_restart(self, filename: str) -> bool:
+        """
+        检查是否需要重启服务。
+
+        :param filename: 检查的文件名。
+        :return: 如果文件存在并且重启标志为真，则返回 True。
+        """
+        return os.path.exists(filename) and self.restart_value
+
+    def restart_service(self) -> None:
+        """
+        执行重启服务逻辑。
+        """
+        self.restart_value = False
+
+        # 发出重启指令
+        open('restart_wsbot.txt', 'w').close()
+
+        while True:
+            time.sleep(1.0)
+            if not os.path.exists("restart_wsbot.txt"):
+                # 创建并运行 WebSocket 服务器线程
+                self.ws_thread = ThreadController("python -m core.message_accept").run()
+                self.ws_thread.start()
+                break
+
+        self.restart_value = True
 
 
+# 实例化并运行应用程序
 main = Application()
 main.run()

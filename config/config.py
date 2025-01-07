@@ -1,9 +1,11 @@
+from typing import Dict
+
 import yaml
 
 from common.logging import logger
 
 # 全局配置字典，用于存储加载的配置
-config: dict = {}
+config: Dict = {}
 
 
 def load_config(file_path: str) -> bool:
@@ -16,11 +18,10 @@ def load_config(file_path: str) -> bool:
     Returns:
         bool: 配置文件是否成功加载。
     """
-    global config
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
             # 使用 yaml.safe_load 安全地加载 YAML 文件
-            config = yaml.safe_load(f)
+            config.update(yaml.safe_load(f))
             logger.debug("配置文件已成功加载")
             return True  # 返回 True 表示加载成功
     except FileNotFoundError:

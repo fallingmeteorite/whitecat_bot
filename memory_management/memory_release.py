@@ -7,13 +7,13 @@ import sys
 import weakref
 from typing import Callable, Any, Dict
 
-from common.config import config
+from config.config import config
 
 # 根据操作系统加载对应的 C 库
 if os.name == 'nt':  # Windows
-    memory_cleaner = ctypes.CDLL('./memory_cleanup/memory_cleaner_win.dll')
+    memory_cleaner = ctypes.CDLL('./memory_management/memory_cleaner_win.dll')
 else:  # Linux
-    memory_cleaner = ctypes.CDLL('./memory_cleanup/memory_cleaner_linux.so')
+    memory_cleaner = ctypes.CDLL('./memory_management/memory_cleaner_linux.so')
 memory_cleaner.clean_memory.restype = ctypes.c_size_t
 
 
@@ -41,6 +41,7 @@ def get_object_source_path(obj: Any) -> str:
 # 定义需要检查的路径列表
 SPECIFIED_PATHS = [config['filters_dir'], config['file_dir'], config['plugin_dir'], config['timer_dir']]
 
+
 def simple_memory_release_decorator(func: Callable) -> Callable:
     """
     简化版内存释放装饰器，仅用于正常回收内存。
@@ -54,7 +55,9 @@ def simple_memory_release_decorator(func: Callable) -> Callable:
         # 调用 Python 的垃圾回收机制
         gc.collect()
         return result
+
     return wrapper
+
 
 def memory_release_decorator(func: Callable) -> Callable:
     """

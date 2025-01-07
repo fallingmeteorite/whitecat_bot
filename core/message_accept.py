@@ -6,15 +6,16 @@ import signal
 import sys
 import threading
 import time
+import weakref
+from typing import Optional, Dict, Any
 
 import websockets
 import websockets.exceptions
 
-from common.config import config
 from common.logging import logger
-from common.message_send import send_message
+from config.config import config
 from core.message_process import message_processor
-from manager.timer_manager import timer_manager
+from plugin_processing.timer_manager import timer_manager
 
 
 class WebSocketManager:
@@ -27,53 +28,49 @@ class WebSocketManager:
         初始化 WebSocket 管理器。
         """
         self.alive = False  # 标记服务器是否运行
-        self.loop = None  # 存储事件循环
-        self.websocket = None  # WebSocket 连接对象
+        self.loop: Optional[asyncio.AbstractEventLoop] = None  # 存储事件循环
+        self.websocket: Optional[websockets.WebSocketClientProtocol] = None  # WebSocket 连接对象
 
         # 注册信号处理函数
         signal.signal(signal.SIGINT, self.handle_signal)  # 处理 Ctrl+C
         signal.signal(signal.SIGTERM, self.handle_signal)  # 处理终止信号
 
-    async def handle_websocket(self, client_id: int):
+    async def handle_websocket(self, client_id: int) -> None:
         """
         处理 WebSocket 连接的异步函数。
 
         Args:
             client_id: 客户端 ID。
         """
-        # 检查是否需要发送重启完成消息
-        for _ in range(5):
-            if os.path.exists("./restart.txt"):
-                with open("./restart.txt", "r") as f:
-                    data = f.read().split(",")
-                send_message(self.websocket, None, int(data[1]), message=f"服务器重启完毕, 花费时间为: {data[2]} s")
-                os.remove("./restart.txt")  # 删除文件
-                break
-            time.sleep(0.4)  # 每次检查间隔 0.5 秒
+        # 使用弱引用存储 WebSocket 对象
+        websocket_ref = weakref.ref(self.websocket)
 
         # 启动定时器任务
         threading.Thread(
             target=timer_manager.handle_command,
-            args=(self.websocket, config["timer_gids_list"]),
+            args=(websocket_ref(), config["timer_gids_list"]),
             daemon=True
         ).start()
 
         try:
             while self.alive:
                 # 接收并处理消息
-                message = json.loads(await self.websocket.recv())
-                message_processor.add_message(self.websocket, message)
-                gc.collect()
+                websocket = websocket_ref()
+                if websocket:
+                    message = json.loads(await websocket.recv())
+                    message_processor.add_message(websocket, message)
+                    gc.collect()
         except Exception as error:
             logger.error(f"发生错误: {error}")
         finally:
             # 关闭 WebSocket 连接
-            if self.websocket:
-                await self.websocket.close()
+            websocket = websocket_ref()
+            if websocket:
+                await websocket.close()
                 self.websocket = None
             logger.error(f"客户端 {client_id} 断开连接")
 
-    async def start_websocket_server(self):
+    async def start_websocket_server(self) -> None:
         """
         启动 WebSocket 服务器的异步函数。
         """
@@ -113,7 +110,7 @@ class WebSocketManager:
                 logger.error("多次尝试后无法连接到 WebSocket 服务器.")
                 continue_connecting = False
 
-    def run_websocket_server(self):
+    def run_websocket_server(self) -> None:
         """
         运行 WebSocket 服务器。
         """
@@ -124,7 +121,7 @@ class WebSocketManager:
         asyncio.set_event_loop(self.loop)  # 设置为当前线程的事件循环
         self.loop.run_until_complete(self.start_websocket_server())
 
-    def handle_signal(self, signum: int, frame):
+    def handle_signal(self, signum: int, frame: Any) -> None:
         """
         处理信号（如 Ctrl+C 或终止信号），优雅地停止应用。
 
@@ -134,10 +131,12 @@ class WebSocketManager:
         """
         logger.info(f"接收到信号 {signum}，停止应用...")
         self.alive = False
+        if self.loop:
+            self.loop.stop()
         sys.exit()
 
 
-def file_monitor():
+def file_monitor() -> None:
     """
     文件监控进程，检查环境变量并在满足条件时停止 WebSocket 应用。
     """
@@ -153,7 +152,7 @@ def file_monitor():
             break
 
 
-def main():
+def main() -> None:
     """
     主函数，启动文件监控进程和 WebSocket 服务器。
     """

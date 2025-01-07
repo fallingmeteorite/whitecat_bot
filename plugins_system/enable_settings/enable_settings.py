@@ -1,29 +1,33 @@
 import os
 import re
 import shutil
-from typing import Dict
+from typing import Dict, Optional, Tuple, Any
 
-from common.config import config
 from common.message_send import send_message
+from config.config import config
 
 SYSTEM_NAME = "插件管理"  # 自定义插件名称
 
 
-def enable_set(websocket, uid: str, nickname: str, gid: str, message_dict: Dict) -> None:
+def enable_set(websocket: Any, uid: str, nickname: str, gid: str, message_dict: Dict) -> None:
     """
     处理插件的启用和禁用命令。
 
-    Args:
-        websocket: WebSocket 连接对象。
-        uid: 用户 ID。
-        nickname: 用户昵称。
-        gid: 群组 ID。
-        message_dict: 消息字典，包含发送的消息。
+    :param websocket: WebSocket 连接对象。
+    :param uid: 用户 ID。
+    :param nickname: 用户昵称。
+    :param gid: 群组 ID。
+    :param message_dict: 消息字典，包含发送的消息。
     """
     message = message_dict["raw_message"].strip()
 
     if "help" in message:
         show_help(websocket, uid, gid)
+        return
+
+    administrator = config.get("admin", [])
+    if uid not in administrator:
+        send_message(websocket, uid, gid, message="你没有权限执行这条命令!")
         return
 
     if "启用" in message:
@@ -46,15 +50,12 @@ def enable_set(websocket, uid: str, nickname: str, gid: str, message_dict: Dict)
         send_message(websocket, uid, gid, message="无效的命令参数。请使用 'help' 查看帮助。")
 
 
-def parse_plugin_info(message: str) -> tuple:
+def parse_plugin_info(message: str) -> Tuple[Optional[str], Optional[str]]:
     """
     解析插件类型和插件名称。
 
-    Args:
-        message: 用户输入的消息。
-
-    Returns:
-        tuple: (插件类型, 插件名称)，如果解析失败则返回 (None, None)。
+    :param message: 用户输入的消息。
+    :return: (插件类型, 插件名称)，如果解析失败则返回 (None, None)。
     """
     try:
         plugin_type = re.findall(r'<(.*?)>', message)[0]
@@ -68,9 +69,8 @@ def enable_plugin(plugin_type: str, plugin_name: str) -> None:
     """
     启用插件。
 
-    Args:
-        plugin_type: 插件类型（如 "定时器", "功能", "过滤器", "文件接收"）。
-        plugin_name: 插件名称。
+    :param plugin_type: 插件类型（如 "定时器", "功能", "过滤器", "文件接收"）。
+    :param plugin_name: 插件名称。
     """
     plugin_dirs = {
         "定时器": config["timer_dir"],
@@ -89,9 +89,8 @@ def disable_plugin(plugin_type: str, plugin_name: str) -> None:
     """
     禁用插件。
 
-    Args:
-        plugin_type: 插件类型（如 "定时器", "功能", "过滤器", "文件接收"）。
-        plugin_name: 插件名称。
+    :param plugin_type: 插件类型（如 "定时器", "功能", "过滤器", "文件接收"）。
+    :param plugin_name: 插件名称。
     """
     plugin_dirs = {
         "定时器": config["timer_dir"],
@@ -106,20 +105,17 @@ def disable_plugin(plugin_type: str, plugin_name: str) -> None:
             shutil.move(source_path, target_path)
 
 
-def show_help(websocket, uid: str, gid: str) -> None:
+def show_help(websocket: Any, uid: str, gid: str) -> None:
     """
     显示插件的帮助信息。
 
-    Args:
-        websocket: WebSocket 连接对象。
-        uid: 用户 ID。
-        gid: 群组 ID。
+    :param websocket: WebSocket 连接对象。
+    :param uid: 用户 ID。
+    :param gid: 群组 ID。
     """
-    help_text = ("用法:\n"
-                 "类型: 定时器, 功能, 过滤器, 文件接收\n"
-                 "禁用 <类型>-插件文件夹名字-  \n"
-                 "启用 <类型>-插件文件夹名字-  \n"
-                 "此命令会移动插件。")
+    help_text = ("参数:\n"
+                 "temp    # 删除所有缓存文件\n"
+                 "show    # 展示文件夹大小")
     send_message(websocket, uid, gid, message=help_text)
 
 
@@ -127,14 +123,12 @@ def register(system_manager) -> None:
     """
     注册插件到插件管理器。
 
-    Args:
-        system_manager: 插件管理器实例。
+    :param system_manager: 插件管理器实例。
     """
     system_manager.register_system(
         name=SYSTEM_NAME,
-        commands=["/插件修改"],
+        commands=["/del_cache"],
         asynchronous=False,
         timeout_processing=True,
-        handler=lambda websocket, uid, nickname, gid, message_dict: enable_set(websocket, uid, nickname, gid,
-                                                                               message_dict),
+        handler=enable_set
     )

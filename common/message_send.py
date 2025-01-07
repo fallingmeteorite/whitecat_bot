@@ -1,6 +1,7 @@
 import asyncio
 import inspect
 import json
+import weakref
 from typing import Optional, Dict, Any
 
 from common.logging import logger
@@ -98,11 +99,14 @@ def _send_json_message(websocket, msg: Dict[str, Any]) -> None:
         websocket: WebSocket 连接对象。
         msg: 消息字典。
     """
+    # 使用弱引用存储 WebSocket 对象
+    websocket_ref = weakref.ref(websocket)
+
     # 将消息字典转换为 JSON 字符串
     msg_json = json.dumps(msg, ensure_ascii=False)
 
     # 发送 JSON 格式的消息
     if is_in_event_loop():
-        asyncio.create_task(websocket.send(msg_json))
+        asyncio.create_task(websocket_ref().send(msg_json))
     else:
-        asyncio.run(websocket.send(msg_json))
+        asyncio.run(websocket_ref().send(msg_json))

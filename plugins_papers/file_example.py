@@ -4,20 +4,17 @@ from typing import Dict, Optional
 
 import websockets
 
-from common.config import config
 from common.logging import logger
+from config.config import config
 
 
-async def send_websocket_message(websocket, message: Dict) -> Optional[Dict]:
+async def send_websocket_message(websocket: Any, message: Dict) -> Optional[Dict]:
     """
     发送 WebSocket 消息并接收响应。
 
-    Args:
-        websocket: WebSocket 连接对象。
-        message: 要发送的消息字典。
-
-    Returns:
-        Optional[Dict]: 接收到的响应数据，如果出错则返回 None。
+    :param websocket: WebSocket 连接对象。
+    :param message: 要发送的消息字典。
+    :return: 接收到的响应数据，如果出错则返回 None。
     """
     try:
         await websocket.send(json.dumps(message))
@@ -28,17 +25,14 @@ async def send_websocket_message(websocket, message: Dict) -> Optional[Dict]:
         return None
 
 
-async def get_file_url(websocket, gid: str, file_id: str) -> Optional[str]:
+async def get_file_url(websocket: Any, gid: str, file_id: str) -> Optional[str]:
     """
     获取文件 URL。
 
-    Args:
-        websocket: WebSocket 连接对象。
-        gid: 群组 ID。
-        file_id: 文件 ID。
-
-    Returns:
-        Optional[str]: 文件 URL，如果获取失败则返回 None。
+    :param websocket: WebSocket 连接对象。
+    :param gid: 群组 ID。
+    :param file_id: 文件 ID。
+    :return: 文件 URL，如果获取失败则返回 None。
     """
     message = {
         "action": "get_group_file_url",
@@ -52,19 +46,18 @@ async def get_file_url(websocket, gid: str, file_id: str) -> Optional[str]:
         data = await send_websocket_message(websocket, message)
         if data and data.get("status") == "ok" and data["data"].get("url"):
             return data["data"]["url"] + "pretags.json"
-        time.sleep(1.0)
+        time.sleep(1.0)  # 等待一秒并重试
 
 
-async def file_set(websocket, uid: str, nickname: str, gid: str, file_id: str) -> None:
+async def file_set(websocket: Any, uid: str, nickname: str, gid: str, file_id: str) -> None:
     """
     处理文件 URL 获取逻辑。
 
-    Args:
-        websocket: WebSocket 连接对象。
-        uid: 用户 ID。
-        nickname: 用户昵称。
-        gid: 群组 ID。
-        file_id: 文件 ID。
+    :param websocket: WebSocket 连接对象。
+    :param uid: 用户 ID。
+    :param nickname: 用户昵称。
+    :param gid: 群组 ID。
+    :param file_id: 文件 ID。
     """
     websocket_uri = f"{config['websocket_uri']}:{config['websocket_port']}"
     try:
@@ -82,12 +75,11 @@ def register(file_manager) -> None:
     """
     注册到文件管理器。
 
-    Args:
-        file_manager: 文件管理器实例。
+    :param file_manager: 文件管理器实例。
     """
     file_manager.register_plugin(
         name="文件 URL 获取插件",
         asynchronous=True,  # 文件加载插件必须用异步，因为涉及到获取文件等操作
         timeout_processing=True,
-        handler=lambda websocket, uid, nickname, gid, file_id: file_set(websocket, uid, nickname, gid, file_id),
+        handler=file_set
     )

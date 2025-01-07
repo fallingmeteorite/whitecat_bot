@@ -7,9 +7,9 @@ import time
 from typing import Dict, List, Optional, Tuple, Callable
 from weakref import WeakValueDictionary
 
-from common.config import config
 from common.logging import logger
-from memory_cleanup.memory_release import simple_memory_release_decorator
+from config.config import config
+from memory_management.memory_release import simple_memory_release_decorator
 
 
 class AsynTask:
@@ -21,10 +21,9 @@ class AsynTask:
         'task_details', 'running_tasks', 'error_logs'
     ]
 
-    def __init__(self):
+    def __init__(self) -> None:
         """
         初始化异步任务管理器。
-
         """
         self.loop: Optional[asyncio.AbstractEventLoop] = None
         self.task_queue = queue.Queue()  # 任务队列
@@ -40,8 +39,7 @@ class AsynTask:
         """
         执行异步任务。
 
-        Args:
-            task: 任务元组，包含超时处理标志、任务 ID、任务函数、位置参数和关键字参数。
+        :param task: 任务元组，包含超时处理标志、任务 ID、任务函数、位置参数和关键字参数。
         """
         timeout_processing, task_id, func, args, kwargs = task
         logger.debug(f"开始运行异步任务, 异步任务名称: {task_id}")
@@ -67,9 +65,8 @@ class AsynTask:
             logger.error(f"异步任务 {task_id} 执行失败: {e}")
             self.task_details[task_id]["status"] = "failed"
             self.log_error(task_id, e)
-
         finally:
-            logger.debug(f"主动回收内存为:{gc.collect()}")
+            logger.debug(f"主动回收内存为: {gc.collect()}")
             self.task_details[task_id]["end_time"] = time.monotonic()
             # 如果任务状态为 "running"，则将其设置为 "completed"
             if self.task_details[task_id]["status"] == "running":
@@ -104,12 +101,11 @@ class AsynTask:
         """
         向任务队列中添加任务。
 
-        Args:
-            timeout_processing: 是否启用超时处理。
-            task_id: 任务 ID。
-            func: 任务函数。
-            args: 任务函数的位置参数。
-            kwargs: 任务函数的关键字参数。
+        :param timeout_processing: 是否启用超时处理。
+        :param task_id: 任务 ID。
+        :param func: 任务函数。
+        :param args: 任务函数的位置参数。
+        :param kwargs: 任务函数的关键字参数。
         """
         if self.task_queue.qsize() <= config["maximum_queue"]:
             self.task_queue.put((timeout_processing, task_id, func, args, kwargs))
@@ -161,7 +157,7 @@ class AsynTask:
                 logger.warning(f"任务 {task_id} 已被强制取消")
 
         # 停止事件循环
-        if self.loop.is_running():  # 确保事件循环正在运行
+        if self.loop and self.loop.is_running():  # 确保事件循环正在运行
             try:
                 self.loop.call_soon_threadsafe(self.loop.stop)
             except Exception as e:
@@ -192,8 +188,7 @@ class AsynTask:
         """
         通过任务 ID 强制停止任务。
 
-        Args:
-            task_id: 任务 ID。
+        :param task_id: 任务 ID。
         """
         if task_id in self.running_tasks:
             future = self.running_tasks[task_id]
@@ -206,9 +201,8 @@ class AsynTask:
         """
         记录任务执行过程中的错误信息。
 
-        Args:
-            task_id: 任务 ID。
-            exception: 异常对象。
+        :param task_id: 任务 ID。
+        :param exception: 异常对象。
         """
         error_info = {
             "task_id": task_id,

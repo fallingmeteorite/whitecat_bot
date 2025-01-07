@@ -1,11 +1,12 @@
 import threading
-from typing import Callable, Optional
+import weakref
+from typing import Callable, Optional, Any
 
 from common.logging import logger
 
 
 class ResettableTimer:
-    def __init__(self, interval: int, callback: Callable):
+    def __init__(self, interval: int, callback: Callable[[], Any]):
         """
         初始化计时器。
 
@@ -13,11 +14,12 @@ class ResettableTimer:
         :param callback: 倒计时结束后触发的回调函数
         """
         self.interval = interval
-        self.callback = callback
+        # 使用弱引用存储回调函数，避免循环引用
+        self._callback_ref = weakref.ref(callback)
         self.timer: Optional[threading.Timer] = None
         self.lock = threading.Lock()
 
-    def start(self):
+    def start(self) -> None:
         """
         启动或重置计时器。
         """
@@ -30,14 +32,16 @@ class ResettableTimer:
             self.timer = threading.Timer(self.interval, self._on_timeout)
             self.timer.start()
 
-    def _on_timeout(self):
+    def _on_timeout(self) -> None:
         """
         计时器超时后触发的内部方法。
         """
-        if self.callback:
-            self.callback()
+        # 获取弱引用的回调函数
+        callback = self._callback_ref()
+        if callback:
+            callback()
 
-    def stop(self):
+    def stop(self) -> None:
         """
         停止计时器。
         """
@@ -46,16 +50,19 @@ class ResettableTimer:
                 self.timer.cancel()
                 self.timer = None
 
+
 # 示例回调函数
-def on_timer_end():
+def on_timer_end() -> None:
     logger.warning("倒计时结束，执行回调函数！")
     with open('restart_ignore.txt', 'w') as f:
         pass
 
+
 # 初始化计时器（10分钟）
 timer = ResettableTimer(interval=600, callback=on_timer_end)
 
+
 # 触发计时器的函数
-def trigger_timer():
+def trigger_timer() -> None:
     logger.info("触发计时器，重置倒计时！")
     timer.start()
