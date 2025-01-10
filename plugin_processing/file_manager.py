@@ -47,6 +47,7 @@ class FileManager:
         """
         # 获取文件处理函数及其配置
         asynchronous, timeout_processing, handler = self.file_info[file]
+
         # 添加任务到调度器
         add_task(
             timeout_processing,
@@ -60,6 +61,11 @@ class FileManager:
             message_dict["message"]["data"]["file_id"]
         )
 
+        # 显式删除不再使用的变量
+        del asynchronous
+        del timeout_processing
+        del handler
+
 
 # 加载文件管理器
 file_dir = config["file_dir"]
@@ -72,4 +78,4 @@ if enable_hot_loading:
 
     # 启动插件文件夹监视
     asyncio.run(start_monitoring(file_dir, load_module, file_manager))
-    del load_module
+del load_module  # 在完成后显式删除不再使用的变量

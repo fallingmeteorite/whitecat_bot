@@ -23,7 +23,13 @@ def is_command_allowed(uid: int, gid: int, command: str, gids_key: str, ban_key:
 
     # 检查用户或群组是否被禁止使用该命令
     ban_dict: Dict[int, Set[str]] = config.get(ban_key, {})
-    return not is_banned(ban_dict, uid, gid, command)
+    allowed = not is_banned(ban_dict, uid, gid, command)
+
+    # 显式删除不再使用的变量
+    del valid_gids
+    del ban_dict
+
+    return allowed
 
 
 def is_banned(ban_dict: Dict[int, Set[str]], uid: int, gid: int, command: str) -> bool:
@@ -66,7 +72,14 @@ def ban_filter(uid: int, gid: int, command: str) -> bool:
     Returns:
         bool: 如果允许使用命令，返回 True；否则返回 False。
     """
-    return is_command_allowed(uid, gid, command, "valid_gids_list", "ban_valid_uids")
+    result = is_command_allowed(uid, gid, command, "valid_gids_list", "ban_valid_uids")
+
+    # 显式删除不再使用的变量
+    del uid
+    del gid
+    del command
+
+    return result
 
 
 def ban_plugin(uid: int, gid: int, command: str) -> bool:
@@ -81,4 +94,11 @@ def ban_plugin(uid: int, gid: int, command: str) -> bool:
     Returns:
         bool: 如果允许使用命令，返回 True；否则返回 False。
     """
-    return is_command_allowed(uid, gid, command, "plugin_gids_list", "ban_plugin_uids")
+    result = is_command_allowed(uid, gid, command, "plugin_gids_list", "ban_plugin_uids")
+
+    # 显式删除不再使用的变量
+    del uid
+    del gid
+    del command
+
+    return result

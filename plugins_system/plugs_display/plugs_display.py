@@ -1,9 +1,8 @@
 from typing import Dict, List, Any
-import weakref
 
-from config.config import config
 from common.logging import logger
 from common.message_send import send_message
+from config.config import config
 from plugin_loading.plugins_load import get_directories
 
 SYSTEM_NAME = "插件展示"  # 自定义插件名称

@@ -1,28 +1,24 @@
 import asyncio
-from datetime import datetime, timedelta, time
-from typing import Any, List
-
-from common.message_send import send_message  # 导入发送消息的函数
+from datetime import datetime, time, timedelta
+from typing import Any
 
 
-def main(websocket: Any, gid_all: List[str]) -> None:
+def restart(websocket: Any) -> None:
     """
-    执行主要任务，向每个群组发送消息。
+    重置用户使用信息并发送通知。
 
     :param websocket: WebSocket 连接对象。
-    :param gid_all: 群组 ID 列表。
     """
-    for gid in gid_all:
-        send_message(websocket, None, gid, message="")  # 可以自定义消息内容
+    open('restart.txt', 'w').close()
 
 
 async def timer(websocket: Any, gid: str, target_time: time) -> None:
     """
-    定时器任务，定时向指定群组发送消息。
+    定时检查并重置用户的使用信息。
 
     :param websocket: WebSocket 连接对象。
     :param gid: 群组 ID。
-    :param target_time: 目标时间，定时发送消息的时间点。
+    :param target_time: 目标时间，重置每日使用次数的时间点。
     """
 
     # 获取当前日期和时间
@@ -38,7 +34,7 @@ async def timer(websocket: Any, gid: str, target_time: time) -> None:
     delay = (target - now).total_seconds()
     if delay > 0:
         await asyncio.sleep(delay)
-        main(websocket, [gid])  # 调用 main 函数，传入群组 ID 列表
+        restart(websocket)
 
 
 def register(timer_manager: Any) -> None:
@@ -49,8 +45,7 @@ def register(timer_manager: Any) -> None:
     """
 
     timer_manager.register_timer(
-        timer_name="定时器测试",
-        # 定义目标时间 15:00
-        target_time=time(15, 0),
+        timer_name="定时重启",
+        target_time=time(00, 00),  # 设定每日重置时间为 18:17
         handler=timer
     )

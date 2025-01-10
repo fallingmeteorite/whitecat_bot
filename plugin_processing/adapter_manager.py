@@ -45,10 +45,17 @@ class AdapterManager:
                     return result
             except Exception as e:
                 logger.error(f"适配器| {adapter_name} |处理消息失败: {e}")
+
+        # 显式删除不再使用的变量
+        del adapter_name
+        del adapter_func
+
         return None, None, None, None
 
 
 # 加载文件管理器
 adapter_dir = config["adapter_dir"]
 adapter_manager, load_module = load(adapter_dir, AdapterManager)
+
+# 显式删除不再使用的变量
 del load_module

@@ -25,11 +25,6 @@ def enable_set(websocket: Any, uid: str, nickname: str, gid: str, message_dict: 
         show_help(websocket, uid, gid)
         return
 
-    administrator = config.get("admin", [])
-    if uid not in administrator:
-        send_message(websocket, uid, gid, message="你没有权限执行这条命令!")
-        return
-
     if "启用" in message:
         plugin_type, plugin_name = parse_plugin_info(message)
         if plugin_type and plugin_name:
@@ -105,17 +100,20 @@ def disable_plugin(plugin_type: str, plugin_name: str) -> None:
             shutil.move(source_path, target_path)
 
 
-def show_help(websocket: Any, uid: str, gid: str) -> None:
+def show_help(websocket, uid: str, gid: str) -> None:
     """
     显示插件的帮助信息。
 
-    :param websocket: WebSocket 连接对象。
-    :param uid: 用户 ID。
-    :param gid: 群组 ID。
+    Args:
+        websocket: WebSocket 连接对象。
+        uid: 用户 ID。
+        gid: 群组 ID。
     """
-    help_text = ("参数:\n"
-                 "temp    # 删除所有缓存文件\n"
-                 "show    # 展示文件夹大小")
+    help_text = ("用法:\n"
+                 "类型: 定时器, 功能, 过滤器, 文件接收\n"
+                 "禁用 <类型>-插件文件夹名字-  \n"
+                 "启用 <类型>-插件文件夹名字-  \n"
+                 "此命令会移动插件。")
     send_message(websocket, uid, gid, message=help_text)
 
 
@@ -123,12 +121,14 @@ def register(system_manager) -> None:
     """
     注册插件到插件管理器。
 
-    :param system_manager: 插件管理器实例。
+    Args:
+        system_manager: 插件管理器实例。
     """
     system_manager.register_system(
         name=SYSTEM_NAME,
-        commands=["/del_cache"],
+        commands=["/插件修改"],
         asynchronous=False,
         timeout_processing=True,
-        handler=enable_set
+        handler=lambda websocket, uid, nickname, gid, message_dict: enable_set(websocket, uid, nickname, gid,
+                                                                               message_dict),
     )

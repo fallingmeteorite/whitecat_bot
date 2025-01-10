@@ -12,7 +12,7 @@ from task_scheduling.thread_scheduling import asyntask, linetask
 
 # 全局插件卸载管理器
 uninstall_manager = None
-# 设置阈值
+# 设置垃圾回收的阈值，以优化内存管理
 gc.set_threshold(20, 0, 0)
 
 
@@ -21,43 +21,54 @@ class PluginUninstall:
     插件卸载器类，用于卸载已加载的插件。
     """
 
-    def register_plugin(self, name: str, commands: Optional[list] = None,
+    logger.debug("正在卸载已加载插件信息和命令")
+
+    # 注册过滤器并执行相应的卸载操作
+    def register_filter(self, filter_name: str,
                         asynchronous: Optional[bool] = None,
                         timeout_processing: Optional[bool] = None,
                         handler: Optional[callable] = None,
                         filter_rule: Optional[dict] = None) -> None:
-        """
-        卸载已加载的插件信息和命令。
 
-        :param name: 插件名称。
-        :param commands: 插件命令列表（可选）。
-        :param asynchronous: 是否异步执行（可选）。
-        :param timeout_processing: 是否启用超时处理（可选）。
-        :param handler: 插件处理函数（可选）。
-        :param filter_rule: 过滤器规则（可选）。
-        """
-        logger.debug("正在卸载已加载插件信息和命令")
+        # 强制停止与过滤器相关的异步任务和线性任务
+        asyntask.force_stop_task(filter_name)
+        linetask.force_stop_task(filter_name)
+        # 从卸载管理器中删除过滤器信息
+        del uninstall_manager.filter_info[filter_name]
 
-        # 判断要卸载的是什么插件，并执行相应的卸载操作
-        if hasattr(uninstall_manager, "plugin_info") and name in uninstall_manager.plugin_info:
-            asyntask.force_stop_task(name)
-            linetask.force_stop_task(name)
-            del uninstall_manager.plugin_info[name]
+    # 注册插件并执行相应的卸载操作
+    def register_plugin(self, name: str,
+                        commands: Optional[list] = None,
+                        asynchronous: Optional[bool] = None,
+                        timeout_processing: Optional[bool] = None,
+                        handler: Optional[callable] = None) -> None:
 
-        if hasattr(uninstall_manager, "file_info") and name in uninstall_manager.file_info:
-            asyntask.force_stop_task(name)
-            linetask.force_stop_task(name)
-            del uninstall_manager.file_info[name]
+        # 强制停止与插件相关的异步任务和线性任务
+        asyntask.force_stop_task(name)
+        linetask.force_stop_task(name)
+        # 从卸载管理器中删除插件信息
+        del uninstall_manager.plugin_info[name]
 
-        if hasattr(uninstall_manager, "filter_info") and name in uninstall_manager.filter_info:
-            asyntask.force_stop_task(name)
-            linetask.force_stop_task(name)
-            del uninstall_manager.filter_info[name]
+    # 注册文件并执行相应的卸载操作
+    def register_plugin(self, name: str,
+                        asynchronous: Optional[bool] = None,
+                        timeout_processing: Optional[bool] = None,
+                        handler: Optional[callable] = None) -> None:
 
-        # 结束定时器任务
-        if hasattr(uninstall_manager, "time_tasks"):
-            asyntask.force_stop_task(name)
-            linetask.force_stop_task(name)
+        # 强制停止与文件相关的异步任务和线性任务
+        asyntask.force_stop_task(name)
+        linetask.force_stop_task(name)
+        # 从卸载管理器中删除文件信息
+        del uninstall_manager.file_info[name]
+
+    # 注册定时器并执行相应的卸载操作
+    def register_timer(self, timer_name: str,
+                       target_time: Optional[int] = None,
+                       handler: Optional[callable] = None) -> None:
+
+        # 强制停止与定时器相关的异步任务和线性任务
+        asyntask.force_stop_task(timer_name)
+        linetask.force_stop_task(timer_name)
 
 
 def get_directories(path: str) -> list:
@@ -99,6 +110,10 @@ def load(load_dir: str, Install: callable) -> tuple:
         # 检查并注册插件
         if hasattr(module, 'register'):
             module.register(manager)
+
+        # 显式删除不再使用的变量
+        del loader
+        del module
 
     return manager, load_module
 
@@ -149,7 +164,7 @@ def reload(path_to_watch: str, original_folder: str, reload_enable: bool,
             del uninstall_manager
             recorder.remove_module_and_referencers(original_folder)
             # 卸载模块并清理内存（通过模块对象卸载）
-            SimpleModuleLoader.unload_module(module)
+            SimpleModuleLoader.unload_module(None, module)
 
             # 手动释放内存
             collected = gc.collect()
@@ -173,6 +188,10 @@ def reload(path_to_watch: str, original_folder: str, reload_enable: bool,
                 if hasattr(module, 'register'):
                     module.register(install)
 
+                # 显式删除不再使用的变量
+                del loader
+                del module
+
         else:  # 重命名操作
             if reload_enable:
                 # 开始记录模块的导入
@@ -191,9 +210,22 @@ def reload(path_to_watch: str, original_folder: str, reload_enable: bool,
                 if hasattr(module, 'register'):
                     module.register(install)
 
+                # 显式删除不再使用的变量
+                del loader
+                del module
+
     except Exception as error:
         logger.error(f"插件加载出现问题, 请确认插件是否存在错误, 报错信息: {error}")
     finally:
         # 重新启动文件监视器
         logger.debug("插件加载完毕, 观察者已开启, 可以修改插件文件夹")
         asyncio.run(start_monitoring(path_to_watch, load_module, install))
+
+        # 显式删除不再使用的变量
+        del path_to_watch
+        del original_folder
+        del reload_enable
+        del target_folder
+        del observer
+        del load_module
+        del install

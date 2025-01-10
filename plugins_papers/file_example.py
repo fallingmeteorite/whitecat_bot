@@ -1,6 +1,6 @@
 import json
 import time
-from typing import Dict, Optional
+from typing import Dict, Optional, Any
 
 import websockets
 

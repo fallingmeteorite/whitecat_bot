@@ -30,9 +30,11 @@ class UserUsageTracker:
         """
         try:
             with open(self.filename, 'r', encoding='utf-8') as file:
-                return json.load(file)
+                data = json.load(file)
         except (FileNotFoundError, json.JSONDecodeError):
-            return {}
+            data = {}
+
+        return data
 
     def _save_data(self) -> None:
         """
@@ -51,7 +53,12 @@ class UserUsageTracker:
         Returns:
             Optional[int]: 用户使用次数，如果用户不存在则返回 None。
         """
-        return self.data.get(uid)
+        count = self.data.get(uid)
+
+        # 显式删除不再使用的变量
+        del uid
+
+        return count
 
     def can_use_detection(self, uid: str, gid: str) -> bool:
         """
@@ -71,6 +78,9 @@ class UserUsageTracker:
         # 获取用户当前使用次数和最大允许次数
         current_count = self.get_usage_count(uid)
         max_uses = config.get("maximum_number_uses", 0)
+
+        # 显式删除不再使用的变量
+        del gid
 
         # 如果用户不存在于记录中，初始化使用次数为 1
         if current_count is None:

@@ -1,5 +1,4 @@
 from typing import Callable
-
 from .asyn_task_assignment import asyntask
 from .line_task_assignment import linetask
 
@@ -21,3 +20,9 @@ def add_task(timeout_processing: bool, task_id: str, func: Callable, asynchronou
     else:
         # 运行线性任务
         linetask.add_task(timeout_processing, task_id, func, *args, **kwargs)
+
+    # 显式删除不再使用的变量（可选）
+    del timeout_processing
+    del task_id
+    del func
+    del asynchronous

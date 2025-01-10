@@ -60,8 +60,15 @@ class SystemManager:
             message
         )
 
+        # 显式删除不再使用的变量
+        del asynchronous
+        del timeout_processing
+        del handler
+
 
 # 加载系统插件管理器
 system_dir = config["system_dir"]
 system_manager, load_module = load(system_dir, SystemManager)
+
+# 显式删除不再使用的变量
 del load_module

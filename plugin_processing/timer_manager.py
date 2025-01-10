@@ -35,8 +35,14 @@ class TimerManager:
                 add_task(False, timer_name, job_func, asynchronous, websocket, gid, target_time)
                 logger.debug(f"TIME | 定时器: {timer_name} 启动成功 | TIME")
                 del self.time_tasks[0]
+                # 显式删除不再使用的变量（每次循环后清理，保持清洁的内存）
+                del timer_name
+                del job_func
+                del target_time
             else:
                 time.sleep(10.0)  # 没有任务时休眠 10 秒
+
+
 
     def register_timer(self, timer_name: str, handler: Callable, target_time: str) -> None:
         """
@@ -52,6 +58,10 @@ class TimerManager:
         self.time_tasks.append((timer_name, handler, target_time))
         logger.debug(f"TIME 定时器:| {timer_name} |加载成功 TIME")
 
+        # 显式删除不再使用的变量
+        del timer_name
+        del handler
+        del target_time
 
 # 加载定时器管理器
 timer_dir = config["timer_dir"]
@@ -64,4 +74,4 @@ if enable_hot_loading:
 
     # 启动插件文件夹监视
     asyncio.run(start_monitoring(timer_dir, load_module, timer_manager))
-    del load_module
+del load_module  # 显式删除不再使用的变量

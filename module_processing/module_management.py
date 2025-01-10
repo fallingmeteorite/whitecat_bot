@@ -27,6 +27,9 @@ class ModuleKeyRecorder:
         self.initial_keys = set(sys.modules.keys())
         self.current_key = import_param
 
+        # 显式删除不再使用的变量
+        del import_param
+
     def stop_recording(self) -> None:
         """
         停止记录模块加载情况，并保存新增的模块。
@@ -38,6 +41,10 @@ class ModuleKeyRecorder:
         new_keys = current_keys - self.initial_keys
         self.recorded_data[self.current_key] = new_keys
 
+        # 显式删除不再使用的变量
+        del current_keys
+        del new_keys
+
     def get_recorded_data(self) -> Dict[str, Set[str]]:
         """
         获取记录的数据。
@@ -45,7 +52,8 @@ class ModuleKeyRecorder:
         Returns:
             dict: 记录的模块数据。
         """
-        return self.recorded_data
+        data = self.recorded_data
+        return data
 
     def remove_module_and_referencers(self, key: str) -> None:
         """
@@ -72,6 +80,9 @@ class ModuleKeyRecorder:
         collected = gc.collect()
         logger.debug(f"垃圾回收完成，释放了 {collected} 个对象")
 
+        # 显式删除不再使用的变量
+        del modules_to_remove
+
     def _is_module_duplicate(self, module: str, current_key: str) -> bool:
         """
         检查模块是否在其他记录中存在。
@@ -86,6 +97,11 @@ class ModuleKeyRecorder:
         for key, modules in self.recorded_data.items():
             if key != current_key and module in modules:
                 return True
+
+        # 显式删除不再使用的变量
+        del key
+        del modules
+
         return False
 
     def _remove_module(self, module: str) -> None:
@@ -107,10 +123,11 @@ class ModuleKeyRecorder:
         # 从 sys.modules 中移除模块
         try:
             del sys.modules[module]
-        except:
-            pass
-        finally:
-            logger.debug(f"模块 '{module}' 已被移除")
+        except Exception as e:
+            logger.debug(f"移除模块时发生错误: {e}")
+
+        # 显式删除不再使用的变量
+        del referencers
 
     def _handle_referencer(self, ref: Any, module: str) -> None:
         """
@@ -128,15 +145,18 @@ class ModuleKeyRecorder:
             elif isinstance(ref, weakref.ProxyType):
                 ref._remove(module)  # 删除弱引用
             elif isinstance(ref, type):
-                logger.debug(f"找到引用者类型: {type(ref)}，这是一个类对象，无需处理")
+                pass
             elif callable(ref):
-                logger.debug(f"找到引用者类型: {type(ref)}，这是一个可调用对象，尝试进行清理")
                 weak_ref = weakref.ref(ref)
                 weak_ref()  # 触发引用的释放
             else:
                 logger.debug(f"找到引用者类型: {type(ref)}，无法自动处理")
         except Exception as e:
             logger.debug(f"处理引用者时发生错误: {e}")
+
+        # 显式删除不再使用的变量
+        del ref
+        del module
 
 
 # 全局实例

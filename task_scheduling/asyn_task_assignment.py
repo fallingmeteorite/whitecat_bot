@@ -4,7 +4,7 @@ import gc
 import queue
 import threading
 import time
-from typing import Dict, List, Optional, Tuple, Callable
+from typing import Dict, List, Tuple, Callable, Optional
 from weakref import WeakValueDictionary
 
 from common.logging import logger
@@ -46,8 +46,7 @@ class AsynTask:
         try:
             self.task_details[task_id] = {
                 "start_time": time.monotonic(),
-                "status": "running",
-                "continue_timing": True  # 初始状态为继续计时
+                "status": "running"
             }
 
             # 如果任务需要超时处理，则设置超时时间
@@ -75,6 +74,13 @@ class AsynTask:
             if task_id in self.running_tasks:
                 del self.running_tasks[task_id]
 
+            # 显式删除任务中的临时变量
+            del timeout_processing
+            del task_id
+            del func
+            del args
+            del kwargs
+
     def scheduler(self) -> None:
         """
         调度函数，从任务队列中取出任务并提交给事件循环执行。
@@ -89,10 +95,15 @@ class AsynTask:
                     break
 
                 if self.task_queue.qsize() == 0:
-                    break
+                    continue
 
                 task = self.task_queue.get()
                 task_id = task[1]
+
+                # 如果任务已经在运行，跳过
+                if task_id in self.running_tasks:
+                    continue
+
                 # 将任务提交给事件循环执行
                 future = asyncio.run_coroutine_threadsafe(self.execute_task(task), self.loop)
                 self.running_tasks[task_id] = future
@@ -107,7 +118,7 @@ class AsynTask:
         :param args: 任务函数的位置参数。
         :param kwargs: 任务函数的关键字参数。
         """
-        if self.task_queue.qsize() <= config["maximum_queue"]:
+        if self.task_queue.qsize() <= config["maximum_queue_async"]:
             self.task_queue.put((timeout_processing, task_id, func, args, kwargs))
 
             # 如果调度线程还没有启动，启动它
@@ -124,11 +135,11 @@ class AsynTask:
         启动调度线程和事件循环线程。
         """
         self.scheduler_started = True
-        scheduler_thread = threading.Thread(target=self.scheduler)
+        scheduler_thread = threading.Thread(target=self.scheduler, daemon=True)
         scheduler_thread.start()
 
         # 启动事件循环线程
-        event_loop_thread = threading.Thread(target=self.run_event_loop)
+        event_loop_thread = threading.Thread(target=self.run_event_loop, daemon=True)
         event_loop_thread.start()
 
     def run_event_loop(self) -> None:
@@ -147,11 +158,8 @@ class AsynTask:
         with self.condition:
             self.condition.notify_all()
 
-        # 将 WeakValueDictionary 转换为普通字典，避免在遍历时字典大小发生变化
-        running_tasks = dict(self.running_tasks)
-
         # 强制取消所有正在运行的任务
-        for task_id, future in running_tasks.items():
+        for task_id, future in self.running_tasks.items():
             if not future.done():  # 检查任务是否已完成
                 future.cancel()
                 logger.warning(f"任务 {task_id} 已被强制取消")

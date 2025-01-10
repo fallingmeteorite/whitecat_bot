@@ -38,7 +38,8 @@ class FilterManager:
         self.filter_info[filter_name] = (filter_rule, asynchronous, timeout_processing, handler)
         logger.debug(f"FILTERS 过滤器:| {filter_name} |导入成功 FILTERS")
 
-    def handle_message(self, websocket: Any, uid: int, gid: int, message_dict: dict, message: str, filter_name: str) -> None:
+    def handle_message(self, websocket: Any, uid: int, gid: int, message_dict: dict, message: str,
+                       filter_name: str) -> None:
         """
         根据已注册的过滤器处理消息。
 
@@ -62,6 +63,12 @@ class FilterManager:
             message_dict
         )
 
+        # 显式删除不再使用的变量
+        del filter_rule
+        del asynchronous
+        del timeout_processing
+        del handler
+
 
 # 加载过滤器管理器
 filter_dir = config["filters_dir"]
@@ -74,4 +81,5 @@ if enable_hot_loading:
 
     # 启动插件文件夹监视
     asyncio.run(start_monitoring(filter_dir, load_module, filter_manager))
-    del load_module
+
+del load_module # 显式删除不再使用的变量

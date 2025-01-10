@@ -2,7 +2,6 @@ import datetime
 import os
 import time
 from typing import Optional
-import weakref
 
 from common.logging import logger
 from config.config import config
@@ -60,6 +59,10 @@ class Application:
         end_time = datetime.datetime.now()
         logger.info(f"本次程序运行了 {end_time - self.start_time}, 正在停止所有进程...")
         logger.info("已停止")
+
+        # 显式删除不再使用的变量
+        del self.start_time
+        del self.ws_thread
 
     @simple_memory_release_decorator
     def restart(self) -> None:

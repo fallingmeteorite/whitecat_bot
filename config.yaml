@@ -15,43 +15,45 @@ adapter_dir: ./plugins_adapter
 #过滤器白名单
 valid_gids_list: [ ]
 
-
 #过滤器黑名单
-#例子:{QQ号或者群号:[插件名字,all=所有插件]}
+#例子:{uid号或者群号:[插件名字,all=所有插件]}
 ban_valid_uids: { }
 
 #插件白名单
 plugin_gids_list: [ ]
 
-
 # 插件黑名单
-#例子:{QQ号或者群号:[插件名字,all=所有插件]}
+#例子:{uid号或者群号:[插件名字,all=所有插件]}
 ban_plugin_uids: { }
 
 #启动插件热加载
 enable_hot_loading: true
 
-# 最大排队队列
-maximum_queue: 12
+# 线性功能最大排队队列
+maximum_queue_line: 12
 
-# 用户信息储存
+# 异步功能最大排队队列
+maximum_queue_async: 12
+
+# 线性任务同时间运行最多任务限制
+line_task_max: 4
+
+# 用户使用次数信息储存
 user_use_file: ./user_use_count.json
 
 # 定时器发布的群聊
 timer_gids_list: [ ]
 
-
 # 限制使用次数的群
 use_restricted_groups: [ ]
 
-
-# 限制最大使用次数
+# 对于限制群,限制最大使用次数
 maximum_number_uses: 25
 
-# 当任务超过多少秒后杀死(单位:秒)
+# 当任务执行超过多少秒后杀死(单位:秒)
 watch_dog_time: 60
 
-#管理员
+# 管理员,只有管理员可以触发系统插件,用uid
 admin: [ ]
 
 

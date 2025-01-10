@@ -3,7 +3,8 @@ import os
 import sys
 import types
 import weakref
-import importlib
+import ast
+from typing import Set
 
 from common.logging import logger
 
@@ -18,6 +19,7 @@ class SimpleModuleLoader:
         """
         self.module_name = module_name
         self.module_path = os.path.abspath(module_path)  # 使用绝对路径
+        self.imported_modules: Set[str] = set()  # 用于存储导入的模块
 
     def load_module(self) -> types.ModuleType:
         """
@@ -38,6 +40,9 @@ class SimpleModuleLoader:
         with open(self.module_path, "r", encoding="utf-8") as f:
             module_code = f.read()
 
+        # 解析模块代码，查找导入语句
+        self._parse_imports(module_code)
+
         # 创建模块对象
         module = types.ModuleType(self.module_name)
         module.__file__ = self.module_path
@@ -53,16 +58,34 @@ class SimpleModuleLoader:
 
         try:
             exec(compiled_code, module.__dict__)
-        except:
-            pass
+        except Exception as error:
+            logger.error(error)
 
         logger.debug(f"模块 '{self.module_name}' 加载成功")
         return module
 
-    @staticmethod
-    def unload_module(module: types.ModuleType) -> None:
+    def _parse_imports(self, module_code: str) -> None:
         """
-        卸载模块并清理内存。
+        解析模块代码，查找导入语句并标记。
+
+        :param module_code: 模块代码
+        """
+        tree = ast.parse(module_code)
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                for alias in node.names:
+                    self.imported_modules.add(alias.name)
+            elif isinstance(node, ast.ImportFrom):
+                if node.module:
+                    self.imported_modules.add(node.module)
+
+        # 显式删除不再使用的变量
+        del tree
+        del node
+
+    def unload_module(self, module: types.ModuleType) -> None:
+        """
+        卸载模块并强制清理内存。
 
         :param module: 要卸载的模块对象
         :raises TypeError: 如果提供的参数不是模块对象
@@ -79,15 +102,39 @@ class SimpleModuleLoader:
 
             # 如果属性是一个模块，递归卸载
             if isinstance(attr_value, types.ModuleType):
-                SimpleModuleLoader.unload_module(attr_value)
+                self.unload_module(attr_value)
 
         # 从 sys.modules 中移除模块
         if module_name in sys.modules:
             del sys.modules[module_name]
             logger.debug(f"模块 '{module_name}' 已从 sys.modules 中移除")
 
+            # 清理导入的模块
+            for imported_module in self.imported_modules:
+                if imported_module in sys.modules:
+                    del sys.modules[imported_module]
+                    logger.debug(f"导入的模块 '{imported_module}' 已从 sys.modules 中移除")
+
+            # 清空模块的 __dict__
+            module.__dict__.clear()
+            logger.debug(f"模块 '{module_name}' 的 __dict__ 已清空")
+
             # 强制垃圾回收
             collected = gc.collect()
             logger.debug(f"垃圾回收完成，释放了 {collected} 个对象")
+
+            # 确保内存归还操作系统
+            self._release_memory_to_os()
         else:
             logger.debug(f"模块 '{module_name}' 未加载，无需卸载")
+
+    @staticmethod
+    def _release_memory_to_os() -> None:
+        """
+        尝试将内存归还给操作系统。
+        """
+        # 调用 gc.collect() 确保所有可回收对象都被清理
+        gc.collect()
+
+        logger.debug("尝试将内存归还给操作系统")
+

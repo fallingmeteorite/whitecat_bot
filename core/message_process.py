@@ -3,14 +3,18 @@ import threading
 import weakref
 from typing import Dict, Optional, Tuple, Any
 
-from config.config import config
 from common.logging import logger
+from config.config import config
+from permission_check.block_manager import ban_filter, ban_plugin
+# 加载所有插件
+# 先加载适配器
 from plugin_processing.adapter_manager import adapter_manager
+# 其他插件加载
 from plugin_processing.file_manager import file_manager
 from plugin_processing.filter_manager import filter_manager
 from plugin_processing.plugin_manager import plugin_manager
+# 系统插件
 from plugin_processing.system_manager import system_manager
-from permission_check.block_manager import ban_filter, ban_plugin
 
 
 class MessageProcessor:
@@ -54,6 +58,7 @@ class MessageProcessor:
                     self._process_files(item)
                     self._process_filters(item)
                 self.message_queue.task_done()
+                del item  # 显式删除 item
             except queue.Empty:
                 continue
 
@@ -90,6 +95,9 @@ class MessageProcessor:
                 if plugin_name and ban_plugin(uid, gid, plugin_name):
                     logger.debug("功能调用触发")
                     plugin_manager.handle_command(websocket, uid, gid, nickname, message_dict, plugin_name)
+                del command, plugin_name
+            del tmp_message
+        del websocket_ref, uid, nickname, gid, message_dict, websocket  # 显式删除变量
 
     def _process_files(self, item: Tuple[weakref.ref, Any, str, str, Dict]) -> None:
         """
@@ -105,6 +113,8 @@ class MessageProcessor:
             if file_name in file_manager.file_info:
                 logger.debug("本地文件更新触发")
                 file_manager.handle_command(websocket, uid, gid, nickname, message_dict, file_name)
+                del file_name
+        del websocket_ref, uid, nickname, gid, message_dict, websocket  # 显式删除变量
 
     def _process_system(self, item: Tuple[weakref.ref, Any, str, str, Dict]) -> None:
         """
@@ -123,6 +133,9 @@ class MessageProcessor:
                 if system_name:
                     logger.debug("系统功能调用触发")
                     system_manager.handle_command(websocket, uid, gid, nickname, message_dict, system_name)
+                del command, system_name
+            del tmp_message
+        del websocket_ref, uid, nickname, gid, message_dict, websocket  # 显式删除变量
 
     def _process_filters(self, item: Tuple[weakref.ref, Any, str, str, Dict]) -> None:
         """
@@ -138,7 +151,9 @@ class MessageProcessor:
                 if ban_filter(uid, gid, filter_name) and filter_rule[0] == message_dict['message']["type"]:
                     logger.debug("过滤器触发")
                     filter_manager.handle_message(websocket, uid, gid, message_dict,
-                                                 message_dict['message'], filter_name)
+                                                  message_dict['message'], filter_name)
+                del filter_name, filter_rule
+        del websocket_ref, uid, nickname, gid, message_dict, websocket  # 显式删除变量
 
     def stop(self) -> None:
         """

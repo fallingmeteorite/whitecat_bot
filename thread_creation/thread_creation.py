@@ -32,4 +32,8 @@ class ThreadController:
 
         thread = threading.Thread(target=run_command, daemon=True)
         logger.info("Thread started")
+
+        # 显式删除不再使用的变量
+        del run_command  # 可选，虽然这里是内部函数，但可以清晰地表明它不再被使用
+
         return thread

@@ -66,6 +66,14 @@ class PluginManager:
         else:
             send_message(websocket, None, gid, message="今天你的使用次数到达上限了，休息一会吧")
 
+        # 显式删除不再使用的变量
+        del websocket
+        del uid
+        del gid
+        del nickname
+        del message
+        del plugin_name
+
 
 # 加载插件管理器
 plugin_dir = config["plugin_dir"]
@@ -78,4 +86,4 @@ if enable_hot_loading:
 
     # 启动插件文件夹监视
     asyncio.run(start_monitoring(plugin_dir, load_module, plugin_manager))
-    del load_module
+del load_module  # 显式删除不再使用的变量

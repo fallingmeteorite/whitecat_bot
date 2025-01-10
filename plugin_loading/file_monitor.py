@@ -28,7 +28,8 @@ def rate_limit(interval: int):
             if current_time - last_called < interval:
                 return None
             last_called = current_time  # 更新上次调用时间
-            return func(*args, **kwargs)  # 执行被装饰的函数
+            result = func(*args, **kwargs)  # 执行被装饰的函数
+            return result
 
         return wrapper
 
@@ -63,7 +64,8 @@ class FolderChangeHandler(FileSystemEventHandler):
         :param path: 文件或文件夹的完整路径
         :return: 文件夹名称
         """
-        return path.replace("\\", "/").split('/')[2]  # 将路径中的反斜杠替换为斜杠，并取第三部分
+        folder_name = path.replace("\\", "/").split('/')[2]  # 将路径中的反斜杠替换为斜杠，并取第三部分
+        return folder_name
 
     @rate_limit(2)
     def handle_folder_change(self, original_dir: str, target_dir: str = None, type_operation: str = None) -> None:
@@ -85,12 +87,17 @@ class FolderChangeHandler(FileSystemEventHandler):
             target_folder = self.get_folder_name(target_dir) if target_dir else None
             reload(self.path_to_watch, original_folder, True, target_folder, self.observer, self.load_module,
                    self.manager)
+            del target_folder
 
         elif type_operation == "deleted":
             reload(self.path_to_watch, original_folder, False, None, self.observer, self.load_module, self.manager)
 
         elif type_operation in ["modified", "created"]:
             reload(self.path_to_watch, original_folder, True, None, self.observer, self.load_module, self.manager)
+
+        # 显式删除不再使用的变量
+        del original_folder
+        del type_operation
 
     @rate_limit(2)
     def on_deleted(self, event) -> None:
@@ -143,3 +150,7 @@ async def start_monitoring(path_to_watch: str, load_module: callable, manager: o
 
     observer.start()  # 启动监听器
     logger.debug(f"文件夹监测已经开启,监测文件夹目录: {path_to_watch}")
+
+    # 显式删除不再使用的变量
+    del observer
+    del event_handler

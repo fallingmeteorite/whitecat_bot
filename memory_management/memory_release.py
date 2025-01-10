@@ -8,6 +8,7 @@ import weakref
 from typing import Callable, Any, Dict
 
 from config.config import config
+from common.logging import logger
 
 # 根据操作系统加载对应的 C 库
 if os.name == 'nt':  # Windows
@@ -88,8 +89,9 @@ def memory_release_decorator(func: Callable) -> Callable:
             source_path = get_object_source_path(module)
             if source_path and any(source_path.startswith(path) for path in SPECIFIED_PATHS):
                 # 如果模块来自指定路径
+                weak_vars[module_name] = weakref.ref(module)  # 使用弱引用存储模块
                 del sys.modules[module_name]  # 从 sys.modules 中移除
-                print(f"Python: 已卸载未使用的模块: {module_name} (路径: {source_path})")
+                logger.debug(f"Python: 已卸载未使用的模块: {module_name} (路径: {source_path})")
 
         # 获取所有对象并检查它们的源路径
         all_objects = gc.get_objects()
@@ -97,6 +99,7 @@ def memory_release_decorator(func: Callable) -> Callable:
             source_path = get_object_source_path(obj)
             if source_path and any(source_path.startswith(path) for path in SPECIFIED_PATHS):
                 # 如果对象来自指定路径，则检查引用
+                weak_vars[id(obj)] = weakref.ref(obj)  # 使用对象 ID 作为键存储弱引用
                 del obj
 
         # 调用 C 函数进行复杂的内存清理
@@ -111,13 +114,13 @@ def memory_release_decorator(func: Callable) -> Callable:
                 if source_path and any(source_path.startswith(path) for path in SPECIFIED_PATHS):
                     # 如果变量来自指定路径，则检查引用
                     if is_weakrefable(var_value):
-                        weak_vars[var_name] = weakref.ref(var_value)
+                        weak_vars[var_name] = weakref.ref(var_value)  # 使用弱引用存储变量
                         del var_value  # 删除强引用
 
         # 检查弱引用变量是否仍被引用
         for var_name, weak_ref in weak_vars.items():
             if weak_ref() is None:
-                print(f"Python: 已清理未使用的变量: {var_name}")
+                logger.debug(f"Python: 已清理未使用的变量: {var_name}")
 
         return result
 

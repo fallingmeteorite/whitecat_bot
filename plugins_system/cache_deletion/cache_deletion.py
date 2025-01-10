@@ -3,7 +3,6 @@ from typing import Dict, Any
 
 from common.logging import logger
 from common.message_send import send_message
-from config.config import config
 
 SYSTEM_NAME = "缓存删除"  # 自定义插件名称
 
@@ -56,11 +55,6 @@ def del_cache(websocket: Any, uid: str, nickname: str, gid: str, message_dict: D
 
     if "help" in message:
         show_help(websocket, uid, gid)
-        return
-
-    administrator = config.get("admin", [])
-    if uid not in administrator:
-        send_message(websocket, uid, gid, message="你没有权限执行这条命令!")
         return
 
     folder_path_list = ["log"]

@@ -1,3 +1,4 @@
+import asyncio
 import atexit
 import gc
 import queue
@@ -46,11 +47,17 @@ class LineTask:
         logger.debug(f"开始运行线性任务, 线性任务名称: {task_id}")
         func(*args, **kwargs)
 
+        # 显式删除不再使用的变量
+        del task_id
+        del func
+        del args
+        del kwargs
+
     def scheduler(self) -> None:
         """
         调度函数，从任务队列中取出任务并提交给线程池执行。
         """
-        with ThreadPoolExecutor(max_workers=4) as executor:
+        with ThreadPoolExecutor(max_workers=int(config["line_task_max"])) as executor:
             while not self.scheduler_stop_event.is_set():
                 with self.condition:
                     while self.task_queue.empty() and not self.scheduler_stop_event.is_set():
@@ -100,6 +107,7 @@ class LineTask:
             logger.warning(f"线性队列任务 | {task_id} | 超时, 强制结束")
             future.cancel()
             self.update_task_status(task_id, "timeout")
+            self.force_stop_task(task_id)  # 强制停止任务
         finally:
             logger.debug(f"主动回收内存为: {gc.collect()}")
 
@@ -161,7 +169,7 @@ class LineTask:
         :param args: 任务函数的位置参数。
         :param kwargs: 任务函数的关键字参数。
         """
-        if self.task_queue.qsize() <= config["maximum_queue"]:
+        if self.task_queue.qsize() <= config["maximum_queue_line"]:
             self.task_queue.put((timeout_processing, task_id, func, args, kwargs))
 
             if not self.scheduler_started:
