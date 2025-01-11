@@ -1,5 +1,6 @@
 import queue
 import threading
+import signal
 import weakref
 from typing import Dict, Optional, Tuple, Any
 
@@ -24,6 +25,10 @@ class MessageProcessor:
         self.lock = False  # 用于判断消息处理线程是否开启
         self.message_queue = queue.Queue()
         self.stop_event = threading.Event()  # 控制线程停止的事件
+
+        # 注册信号处理函数
+        signal.signal(signal.SIGINT, self.handle_signal)  # 处理 Ctrl+C
+        signal.signal(signal.SIGTERM, self.handle_signal)  # 处理终止信号
 
     def add_message(self, websocket: Any, message: Dict) -> None:
         """
@@ -155,9 +160,13 @@ class MessageProcessor:
                 del filter_name, filter_rule
         del websocket_ref, uid, nickname, gid, message_dict, websocket  # 显式删除变量
 
-    def stop(self) -> None:
+    def handle_signal(self, signum: int, frame: Any) -> None:
         """
-        停止消息处理线程。
+        处理信号（如 Ctrl+C 或终止信号），优雅地停止应用。
+
+        Args:
+            signum: 信号编号。
+            frame: 当前的堆栈帧。
         """
         self.stop_event.set()
 

@@ -7,7 +7,7 @@ import sys
 import threading
 import time
 import weakref
-from typing import Optional, Dict, Any
+from typing import Optional, Any
 
 import websockets
 import websockets.exceptions

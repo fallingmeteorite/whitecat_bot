@@ -18,7 +18,7 @@ class AsynTask:
     """
     __slots__ = [
         'loop', 'task_queue', 'condition', 'scheduler_started', 'scheduler_stop_event',
-        'task_details', 'running_tasks', 'error_logs'
+        'task_details', 'running_tasks', 'error_logs', 'scheduler_thread', 'event_loop_thread'
     ]
 
     def __init__(self) -> None:
@@ -33,6 +33,8 @@ class AsynTask:
         self.task_details: Dict[str, Dict] = {}  # 任务详细信息
         self.running_tasks: WeakValueDictionary[str, asyncio.Task] = WeakValueDictionary()  # 使用弱引用减少内存占用
         self.error_logs: List[Dict] = []  # 错误日志，最多保留 10 条
+        self.scheduler_thread: Optional[threading.Thread] = None  # 调度线程
+        self.event_loop_thread: Optional[threading.Thread] = None  # 事件循环线程
 
     @simple_memory_release_decorator
     async def execute_task(self, task: Tuple[bool, str, Callable, Tuple, Dict]) -> None:
@@ -135,12 +137,12 @@ class AsynTask:
         启动调度线程和事件循环线程。
         """
         self.scheduler_started = True
-        scheduler_thread = threading.Thread(target=self.scheduler, daemon=True)
-        scheduler_thread.start()
+        self.scheduler_thread = threading.Thread(target=self.scheduler, daemon=True)
+        self.scheduler_thread.start()
 
         # 启动事件循环线程
-        event_loop_thread = threading.Thread(target=self.run_event_loop, daemon=True)
-        event_loop_thread.start()
+        self.event_loop_thread = threading.Thread(target=self.run_event_loop, daemon=True)
+        self.event_loop_thread.start()
 
     def run_event_loop(self) -> None:
         """
@@ -164,12 +166,25 @@ class AsynTask:
                 future.cancel()
                 logger.warning(f"任务 {task_id} 已被强制取消")
 
+        # 清空任务队列
+        while not self.task_queue.empty():
+            self.task_queue.get()
+
         # 停止事件循环
         if self.loop and self.loop.is_running():  # 确保事件循环正在运行
             try:
                 self.loop.call_soon_threadsafe(self.loop.stop)
+                # 等待事件循环线程结束
+                if self.event_loop_thread and self.event_loop_thread.is_alive():
+                    self.event_loop_thread.join(timeout=5)  # 最多等待 5 秒
             except Exception as e:
                 logger.error(f"停止事件循环时发生错误: {e}")
+
+        # 等待调度线程结束
+        if self.scheduler_thread and self.scheduler_thread.is_alive():
+            self.scheduler_thread.join(timeout=5)  # 最多等待 5 秒
+
+        logger.info("调度线程和事件循环已停止，所有资源已释放")
 
     def get_queue_info(self) -> Dict:
         """

@@ -16,24 +16,20 @@ def accept_control(websocket: Any, uid: str, nickname: str, gid: str, message_di
     :param gid: 群组 ID。
     :param message_dict: 消息字典，包含发送的消息。
     """
-    # 使用弱引用避免循环引用导致的内存泄漏
-    MessageProcessor = ref(__import__("core.message_process").MessageProcessor)
+    from core.message_process import MessageProcessor
 
     if "help" in message_dict:
         show_help(websocket, uid, gid)
         return
 
     if "stop" in message_dict["raw_message"]:
-        processor = MessageProcessor()
-        if processor:
-            processor.pause_message_processing = False
-            send_message(websocket, uid, gid, message="停止信息接受")
+
+        MessageProcessor.pause_message_processing = False
+        send_message(websocket, uid, gid, message="停止信息接受")
 
     if "start" in message_dict["raw_message"]:
-        processor = MessageProcessor()
-        if processor:
-            processor.pause_message_processing = True
-            send_message(websocket, uid, gid, message="开始信息接受")
+        MessageProcessor.pause_message_processing = True
+        send_message(websocket, uid, gid, message="开始信息接受")
 
 
 def show_help(websocket: Any, uid: str, gid: str) -> None:

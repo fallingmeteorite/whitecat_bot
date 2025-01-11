@@ -20,7 +20,7 @@ class LineTask:
     """
     __slots__ = [
         'task_queue', 'running_tasks', 'task_details', 'lock', 'condition',
-        'scheduler_started', 'scheduler_stop_event', 'error_logs'
+        'scheduler_started', 'scheduler_stop_event', 'error_logs', 'scheduler_thread'
     ]
 
     def __init__(self) -> None:
@@ -35,6 +35,7 @@ class LineTask:
         self.scheduler_started = False  # 调度线程是否已启动
         self.scheduler_stop_event = threading.Event()  # 调度线程停止事件
         self.error_logs: List[Dict] = []  # 错误日志，最多保留 10 条
+        self.scheduler_thread: threading.Thread = None  # 调度线程
 
     @simple_memory_release_decorator
     def execute_task(self, task: Tuple[bool, str, Callable, Tuple, Dict]) -> None:
@@ -183,8 +184,8 @@ class LineTask:
         启动调度线程。
         """
         self.scheduler_started = True
-        scheduler_thread = threading.Thread(target=self.scheduler)
-        scheduler_thread.start()
+        self.scheduler_thread = threading.Thread(target=self.scheduler)
+        self.scheduler_thread.start()
 
     def stop_scheduler(self) -> None:
         """
@@ -201,6 +202,16 @@ class LineTask:
                 future.cancel()
                 logger.warning(f"任务 {task_id} 已被强制取消")
                 self.update_task_status(task_id, "cancelled")
+
+        # 清空任务队列
+        while not self.task_queue.empty():
+            self.task_queue.get()
+
+        # 等待调度线程结束
+        if self.scheduler_thread and self.scheduler_thread.is_alive():
+            self.scheduler_thread.join()
+
+        logger.info("调度线程已停止，所有资源已释放")
 
     def get_queue_info(self) -> Dict:
         """
