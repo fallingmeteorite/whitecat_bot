@@ -19,7 +19,7 @@ class FileManager:
         """
         self.file_info: Dict[str, Tuple[bool, bool, Callable]] = {}
 
-    def register_plugin(self, name: str, asynchronous: bool, timeout_processing: bool, handler: Callable) -> None:
+    def register_file(self, name: str, asynchronous: bool, timeout_processing: bool, handler: Callable) -> None:
         """
         注册文件处理插件。
 

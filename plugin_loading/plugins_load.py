@@ -50,7 +50,7 @@ class PluginUninstall:
         del uninstall_manager.plugin_info[name]
 
     # 注册文件并执行相应的卸载操作
-    def register_plugin(self, name: str,
+    def register_file(self, name: str,
                         asynchronous: Optional[bool] = None,
                         timeout_processing: Optional[bool] = None,
                         handler: Optional[callable] = None) -> None:

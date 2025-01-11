@@ -77,7 +77,7 @@ def register(file_manager) -> None:
 
     :param file_manager: 文件管理器实例。
     """
-    file_manager.register_plugin(
+    file_manager.register_file(
         name="文件 URL 获取插件",
         asynchronous=True,  # 文件加载插件必须用异步，因为涉及到获取文件等操作
         timeout_processing=True,
