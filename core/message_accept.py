@@ -133,6 +133,7 @@ class WebSocketManager:
         self.alive = False
         if self.loop:
             self.loop.stop()
+        logger.warning("正在等待运行任务结束,请耐心等待")
         sys.exit()
 
 

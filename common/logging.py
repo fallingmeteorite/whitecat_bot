@@ -1,16 +1,3 @@
-"""该模块定义了通用的日志记录 Logger。
-
-默认信息:
-- 格式: `<g>{time:MM-DD HH:mm:ss}</g> [<lvl>{level}</lvl>] <c><u>{name}</u></c> | {message}`
-- 等级: `INFO`，根据 `config.log_level` 配置改变
-- 输出: 输出至 `log` 文件夹下
-
-用法:
-```python
-from log import logger
-```
-"""
-
 import os
 import sys
 import weakref
@@ -61,15 +48,14 @@ try:
     )
 except Exception as e:
     # 如果日志文件设置失败，输出错误信息并使用标准输出作为备份
-    print(f"Error setting up logging: {e}", file=sys.stderr)
+    print(f"设置日志时发生错误: {e}\n"
+          f"可能的原因: 检查日志目录权限，确保路径有效，检查 Loguru 配置。", file=sys.stderr)
+    # 添加标准错误输出作为备份
     _logger_ref().add(sys.stderr, level=LOG_LEVEL, format=plain_format)
 
 # 日志记录器对象
 logger = _logger_ref()
-"""日志记录器对象。
 
-默认信息:
-- 格式: `<g>{time:MM-DD HH:mm:ss}</g> [<lvl>{level}</lvl>] <c><u>{name}</u></c> | {message}`
-- 等级: `INFO`，根据 `config.log_level` 配置改变
-- 输出: 输出至 `log` 文件夹下
-"""
+# 在程序结束时关闭日志记录器
+import atexit
+atexit.register(lambda: _logger_ref().remove())
