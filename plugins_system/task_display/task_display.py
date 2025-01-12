@@ -112,26 +112,9 @@ def task_display(websocket: Any, uid: str, nickname: str, gid: str, message_dict
     :param gid: 群组 ID。
     :param message_dict: 消息字典，包含发送的消息。
     """
-    if "help" in message_dict:
-        show_help(websocket, uid, gid)
-        return
 
     info = get_all_queue_info(max_display_time=1000)
     send_notification(websocket, uid, gid, message=info)
-
-
-def show_help(websocket: Any, uid: str, gid: str) -> None:
-    """
-    显示插件的帮助信息。
-
-    :param websocket: WebSocket 连接对象。
-    :param uid: 用户 ID。
-    :param gid: 群组 ID。
-    """
-    help_text = ("用法:\n"
-                 "进程信息 \n"
-                 "此命令会返回任务队列。")
-    send_notification(websocket, uid, gid, message=help_text)
 
 
 def register(system_manager) -> None:

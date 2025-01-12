@@ -92,12 +92,6 @@ def memory_footprint(websocket: Any, uid: str, nickname: str, gid: str, message_
     :param gid: 群组 ID。
     :param message_dict: 消息字典，包含发送的消息。
     """
-    message = message_dict["raw_message"].strip().lower()
-
-    if "help" in message:
-        show_help(websocket, uid, gid)
-        return
-
     memory_usage = get_memory_usage()
     top_mem_procs = get_top_memory_processes(5)
     cpu_usage = get_cpu_usage()
@@ -105,20 +99,6 @@ def memory_footprint(websocket: Any, uid: str, nickname: str, gid: str, message_
 
     output = memory_usage + top_mem_procs + cpu_usage + top_cpu_procs
     send_message(websocket, uid, gid, message=output)
-
-
-def show_help(websocket: Any, uid: str, gid: str) -> None:
-    """
-    显示插件的帮助信息。
-
-    :param websocket: WebSocket 连接对象。
-    :param uid: 用户 ID。
-    :param gid: 群组 ID。
-    """
-    help_text = ("用法:\n"
-                 "系统情况 \n"
-                 "此命令会反馈服务器内存和 CPU 信息。")
-    send_message(websocket, uid, gid, message=help_text)
 
 
 def register(system_manager) -> None:

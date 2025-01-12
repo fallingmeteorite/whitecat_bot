@@ -53,10 +53,6 @@ def del_cache(websocket: Any, uid: str, nickname: str, gid: str, message_dict: D
     """
     message = message_dict['raw_message'].strip().lower()
 
-    if "help" in message:
-        show_help(websocket, uid, gid)
-        return
-
     folder_path_list = ["log"]
 
     if "temp" in message:
@@ -70,20 +66,6 @@ def del_cache(websocket: Any, uid: str, nickname: str, gid: str, message_dict: D
 
     else:
         send_message(websocket, uid, gid, message="无效的命令参数。请使用 'help' 查看帮助。")
-
-
-def show_help(websocket: Any, uid: str, gid: str) -> None:
-    """
-    显示插件的帮助信息。
-
-    :param websocket: WebSocket 连接对象。
-    :param uid: 用户 ID。
-    :param gid: 群组 ID。
-    """
-    help_text = ("参数:\n"
-                 "temp    # 删除所有缓存文件\n"
-                 "show    # 展示文件夹大小")
-    send_message(websocket, uid, gid, message=help_text)
 
 
 def register(system_manager) -> None:

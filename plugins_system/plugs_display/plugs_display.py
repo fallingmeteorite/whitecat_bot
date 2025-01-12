@@ -32,20 +32,6 @@ def plugs_display(websocket: Any, uid: str, nickname: str, gid: str, message_dic
     send_message(websocket, uid, gid, message=output)
 
 
-def show_help(websocket: Any, uid: str, gid: str) -> None:
-    """
-    显示插件的帮助信息。
-
-    :param websocket: WebSocket 连接对象。
-    :param uid: 用户 ID。
-    :param gid: 群组 ID。
-    """
-    help_text = ("用法:\n"
-                 "插件列表 \n"
-                 "此命令会反馈已加载的插件目录。")
-    send_message(websocket, uid, gid, message=help_text)
-
-
 def register(system_manager) -> None:
     """
     注册插件到插件管理器。

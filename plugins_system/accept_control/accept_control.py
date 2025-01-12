@@ -1,5 +1,4 @@
 from typing import Dict, Any
-from weakref import ref
 
 from common.message_send import send_message
 
@@ -18,32 +17,13 @@ def accept_control(websocket: Any, uid: str, nickname: str, gid: str, message_di
     """
     from core.message_process import MessageProcessor
 
-    if "help" in message_dict:
-        show_help(websocket, uid, gid)
-        return
-
     if "stop" in message_dict["raw_message"]:
-
         MessageProcessor.pause_message_processing = False
         send_message(websocket, uid, gid, message="停止信息接受")
 
     if "start" in message_dict["raw_message"]:
         MessageProcessor.pause_message_processing = True
         send_message(websocket, uid, gid, message="开始信息接受")
-
-
-def show_help(websocket: Any, uid: str, gid: str) -> None:
-    """
-    显示插件的帮助信息。
-
-    :param websocket: WebSocket 连接对象。
-    :param uid: 用户 ID。
-    :param gid: 群组 ID。
-    """
-    help_text = ("用法:\n"
-                 "进程信息 \n"
-                 "此命令会返回任务队列。")
-    send_message(websocket, uid, gid, message=help_text)
 
 
 def register(system_manager) -> None:

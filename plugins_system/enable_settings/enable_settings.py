@@ -21,10 +21,6 @@ def enable_set(websocket: Any, uid: str, nickname: str, gid: str, message_dict: 
     """
     message = message_dict["raw_message"].strip()
 
-    if "help" in message:
-        show_help(websocket, uid, gid)
-        return
-
     if "启用" in message:
         plugin_type, plugin_name = parse_plugin_info(message)
         if plugin_type and plugin_name:
@@ -98,23 +94,6 @@ def disable_plugin(plugin_type: str, plugin_name: str) -> None:
         target_path = f"./plugins_disuse/{plugin_name}"
         if os.path.exists(source_path):
             shutil.move(source_path, target_path)
-
-
-def show_help(websocket, uid: str, gid: str) -> None:
-    """
-    显示插件的帮助信息。
-
-    Args:
-        websocket: WebSocket 连接对象。
-        uid: 用户 ID。
-        gid: 群组 ID。
-    """
-    help_text = ("用法:\n"
-                 "类型: 定时器, 功能, 过滤器, 文件接收\n"
-                 "禁用 <类型>-插件文件夹名字-  \n"
-                 "启用 <类型>-插件文件夹名字-  \n"
-                 "此命令会移动插件。")
-    send_message(websocket, uid, gid, message=help_text)
 
 
 def register(system_manager) -> None:
