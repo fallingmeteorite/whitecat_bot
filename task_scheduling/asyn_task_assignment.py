@@ -1,5 +1,4 @@
 import asyncio
-import atexit
 import gc
 import queue
 import threading
@@ -102,10 +101,6 @@ class AsynTask:
                 task = self.task_queue.get()
                 task_id = task[1]
 
-                # 如果任务已经在运行，跳过
-                if task_id in self.running_tasks:
-                    continue
-
                 # 将任务提交给事件循环执行
                 future = asyncio.run_coroutine_threadsafe(self.execute_task(task), self.loop)
                 self.running_tasks[task_id] = future
@@ -161,7 +156,8 @@ class AsynTask:
             self.condition.notify_all()
 
         # 强制取消所有正在运行的任务
-        for task_id, future in self.running_tasks.items():
+        for task_id in list(self.running_tasks.keys()):  # 使用 list() 创建副本
+            future = self.running_tasks[task_id]
             if not future.done():  # 检查任务是否已完成
                 future.cancel()
                 logger.warning(f"任务 {task_id} 已被强制取消")
@@ -241,4 +237,3 @@ class AsynTask:
 
 # 注册退出处理函数
 asyntask = AsynTask()
-atexit.register(asyntask.stop_scheduler)

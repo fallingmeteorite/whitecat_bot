@@ -1,5 +1,3 @@
-import asyncio
-import atexit
 import gc
 import queue
 import threading
@@ -12,6 +10,8 @@ from weakref import WeakValueDictionary
 from common.logging import logger
 from config.config import config
 from memory_management.memory_release import simple_memory_release_decorator
+from task_scheduling.task_destruction import manager
+from task_scheduling.threadstop import ThreadingTimeout, TimeoutException
 
 
 class LineTask:
@@ -44,15 +44,24 @@ class LineTask:
 
         :param task: 任务元组，包含超时处理标志、任务 ID、任务函数、位置参数和关键字参数。
         """
-        _, task_id, func, args, kwargs = task
+        timeout_processing, task_id, func, args, kwargs = task
         logger.debug(f"开始运行线性任务, 线性任务名称: {task_id}")
-        func(*args, **kwargs)
 
-        # 显式删除不再使用的变量
-        del task_id
-        del func
-        del args
-        del kwargs
+        # 超时处理和任务执行
+        try:
+            if timeout_processing:
+                with ThreadingTimeout(seconds=config["watch_dog_time"], swallow_exc=False) as task_control:
+                    manager.add(task_control, task_id)
+                    func(*args, **kwargs)
+                    manager.remove(task_id)
+            else:
+                with ThreadingTimeout(seconds=None, swallow_exc=True) as task_control:
+                    manager.add(task_control, task_id)
+                    func(*args, **kwargs)
+                    manager.remove(task_id)
+        finally:
+            # 显式删除不再使用的变量
+            del timeout_processing, task_id, func, args, kwargs
 
     def scheduler(self) -> None:
         """
@@ -72,7 +81,7 @@ class LineTask:
 
                     task = self.task_queue.get()
 
-                timeout_processing, task_id, _, _, _ = task
+                _, task_id, _, _, _ = task
 
                 with self.lock:
                     if task_id in self.running_tasks:
@@ -87,30 +96,38 @@ class LineTask:
 
                 future = executor.submit(self.execute_task, task)
                 future.add_done_callback(partial(self.task_done, task_id))
-                if timeout_processing:
-                    # 启动一个线程来监控任务的超时
-                    threading.Thread(target=self.monitor_task_timeout, args=(task_id, future)).start()
+
+                # 启动一个线程来监控 future 的状态
+                threading.Thread(target=self.monitor_future_status, args=(task_id, future)).start()
 
                 # 将 future 对象与任务 ID 关联
                 with self.lock:
                     self.running_tasks[task_id] = future
 
-    def monitor_task_timeout(self, task_id: str, future: ThreadPoolExecutor) -> None:
+    def monitor_future_status(self, task_id: str, future: ThreadPoolExecutor) -> None:
         """
-        监控任务超时。
+        监控 future 的状态，记录任务的执行情况。
 
         :param task_id: 任务 ID。
         :param future: 任务对应的 future 对象。
         """
-        try:
-            future.result(timeout=config["watch_dog_time"])
-        except Exception:
-            logger.warning(f"线性队列任务 | {task_id} | 超时, 强制结束")
-            future.cancel()
-            self.update_task_status(task_id, "timeout")
-            self.force_stop_task(task_id)  # 强制停止任务
-        finally:
-            logger.debug(f"主动回收内存为: {gc.collect()}")
+        while not future.done():
+            time.sleep(18)  # 每隔 18 秒检查一次
+            # 监控 future 的状态
+            if future.running():
+                logger.debug(f"任务 {task_id} 正在运行")
+            elif future.cancelled():
+                logger.warning(f"任务 {task_id} 已被取消")
+
+
+        # 任务完成后记录状态
+        if future.done():
+            if future.cancelled():
+                logger.warning(f"任务 {task_id} 已被取消")
+            elif future.exception():
+                logger.error(f"任务 {task_id} 执行失败: {future.exception()}")
+            else:
+                logger.debug(f"任务 {task_id} 已完成")
 
     def task_done(self, task_id: str, future: ThreadPoolExecutor) -> None:
         """
@@ -122,6 +139,9 @@ class LineTask:
         try:
             future.result()  # 获取任务结果，如果有异常会在这里抛出
             self.update_task_status(task_id, "completed")
+        except TimeoutException:
+            logger.warning(f"线性队列任务 | {task_id} | 超时, 强制结束")
+            self.update_task_status(task_id, "timeout")
         except Exception as e:
             logger.error(f"线性任务 {task_id} 执行失败: {e}")
             self.update_task_status(task_id, "failed")
@@ -192,6 +212,7 @@ class LineTask:
         停止调度线程，并强制杀死所有任务。
         """
         logger.warning("退出清理")
+        manager.stop_all()
         self.scheduler_stop_event.set()
         with self.condition:
             self.condition.notify_all()
@@ -231,15 +252,14 @@ class LineTask:
 
     def force_stop_task(self, task_id: str) -> None:
         """
-        通过任务 ID 强制停止任务。
+        通过任务 ID 强制停止任务，并手动触发超时。
 
         Args:
             task_id: 任务 ID。
         """
         with self.lock:
             if task_id in self.running_tasks:
-                future = self.running_tasks[task_id]
-                future.cancel()
+                manager.stop(task_id)
                 logger.warning(f"任务 {task_id} 已被强制取消")
                 self.update_task_status(task_id, "cancelled")
             else:
@@ -248,4 +268,3 @@ class LineTask:
 
 # 注册退出处理函数
 linetask = LineTask()
-atexit.register(linetask.stop_scheduler)
