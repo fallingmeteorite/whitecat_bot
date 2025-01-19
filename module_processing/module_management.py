@@ -74,7 +74,6 @@ class ModuleKeyRecorder:
             self._remove_module(module)
 
         del self.recorded_data[key]
-        logger.debug(f"记录模块 '{key}' 及其相关模块已删除")
 
         # 强制垃圾回收
         collected = gc.collect()
@@ -123,8 +122,8 @@ class ModuleKeyRecorder:
         # 从 sys.modules 中移除模块
         try:
             del sys.modules[module]
-        except Exception as e:
-            logger.debug(f"移除模块时发生错误: {e}")
+        except:
+            pass
 
         # 显式删除不再使用的变量
         del referencers
@@ -149,8 +148,6 @@ class ModuleKeyRecorder:
             elif callable(ref):
                 weak_ref = weakref.ref(ref)
                 weak_ref()  # 触发引用的释放
-            else:
-                logger.debug(f"找到引用者类型: {type(ref)}，无法自动处理")
         except Exception as e:
             logger.debug(f"处理引用者时发生错误: {e}")
 

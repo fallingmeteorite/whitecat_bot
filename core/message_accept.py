@@ -1,5 +1,4 @@
 import asyncio
-import gc
 import json
 import os
 import signal
@@ -22,6 +21,9 @@ class WebSocketManager:
     """
     WebSocket 管理器类，负责 WebSocket 连接的建立、消息处理和异常处理。
     """
+    # 消息控制
+    websocket_stop = False
+    websocket_stopping = False
 
     def __init__(self):
         """
@@ -56,10 +58,15 @@ class WebSocketManager:
             while self.alive:
                 # 接收并处理消息
                 websocket = websocket_ref()
-                if websocket:
+                if websocket and not self.websocket_stop:
+                    if self.websocket_stopping:
+                        self.websocket_stopping = False
                     message = json.loads(await websocket.recv())
                     message_processor.add_message(websocket, message)
-                    gc.collect()
+                else:
+                    if not self.websocket_stopping:
+                        self.websocket_stopping = True
+                    await asyncio.sleep(2)
         except Exception as error:
             logger.error(f"发生错误: {error}")
         finally:
@@ -143,6 +150,12 @@ def file_monitor() -> None:
     """
     while True:
         try:
+            if os.path.exists("./websocket_stop.txt"):
+                if not ws_manager.websocket_stop:
+                    ws_manager.websocket_stop = True
+                if ws_manager.websocket_stopping:
+                    os.remove("websocket_stop.txt")
+
             if os.path.exists("./restart_wsbot.txt"):
                 logger.info("监控到停止条件，准备停止 wsbot 应用...")
                 os.kill(os.getpid(), signal.SIGTERM)

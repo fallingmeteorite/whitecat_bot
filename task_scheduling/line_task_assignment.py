@@ -35,7 +35,7 @@ class LineTask:
         self.scheduler_started = False  # 调度线程是否已启动
         self.scheduler_stop_event = threading.Event()  # 调度线程停止事件
         self.error_logs: List[Dict] = []  # 错误日志，最多保留 10 条
-        self.scheduler_thread: threading.Thread = None  # 调度线程
+        self.scheduler_thread: threading.Thread  # 调度线程
 
     @simple_memory_release_decorator
     def execute_task(self, task: Tuple[bool, str, Callable, Tuple, Dict]) -> None:
@@ -51,13 +51,17 @@ class LineTask:
         try:
             if timeout_processing:
                 with ThreadingTimeout(seconds=config["watch_dog_time"], swallow_exc=False) as task_control:
+                    # 将停止函数方法放入字典中
                     manager.add(task_control, task_id)
                     func(*args, **kwargs)
+                    # 将停止函数方法从字典中移除
                     manager.remove(task_id)
             else:
                 with ThreadingTimeout(seconds=None, swallow_exc=True) as task_control:
+                    # 将停止函数方法放入字典中
                     manager.add(task_control, task_id)
                     func(*args, **kwargs)
+                    # 将停止函数方法从字典中移除
                     manager.remove(task_id)
         finally:
             # 显式删除不再使用的变量
@@ -76,6 +80,7 @@ class LineTask:
                     if self.scheduler_stop_event.is_set():
                         break
 
+                    # 如果没有任务就跳过
                     if self.task_queue.qsize() == 0:
                         continue
 
@@ -93,8 +98,9 @@ class LineTask:
                         "start_time": time.time(),
                         "status": "running"
                     }
-
+                # 提交任务
                 future = executor.submit(self.execute_task, task)
+                # 添加完成后执行函数
                 future.add_done_callback(partial(self.task_done, task_id))
 
                 # 启动一个线程来监控 future 的状态
@@ -118,7 +124,6 @@ class LineTask:
                 logger.debug(f"任务 {task_id} 正在运行")
             elif future.cancelled():
                 logger.warning(f"任务 {task_id} 已被取消")
-
 
         # 任务完成后记录状态
         if future.done():
@@ -212,6 +217,7 @@ class LineTask:
         停止调度线程，并强制杀死所有任务。
         """
         logger.warning("退出清理")
+        # 尝试关闭所有正在运行的任务
         manager.stop_all()
         self.scheduler_stop_event.set()
         with self.condition:
@@ -220,6 +226,7 @@ class LineTask:
         # 强制取消所有正在运行的任务
         with self.lock:
             for task_id, future in self.running_tasks.items():
+                # 取消还没有执行的任务
                 future.cancel()
                 logger.warning(f"任务 {task_id} 已被强制取消")
                 self.update_task_status(task_id, "cancelled")
@@ -266,5 +273,5 @@ class LineTask:
                 logger.warning(f"任务 {task_id} 不存在或已完成")
 
 
-# 注册退出处理函数
+# 实例化对象
 linetask = LineTask()

@@ -8,7 +8,7 @@ from common.logging import logger
 from config.config import config
 
 
-async def send_websocket_message(websocket: Any, message: Dict) -> Optional[Dict]:
+async def send_websocket_message(websocket_base: Any, message: Dict) -> Optional[Dict]:
     """
     发送 WebSocket 消息并接收响应。
 

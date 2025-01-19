@@ -1,5 +1,4 @@
 import atexit
-import sys
 from typing import Callable
 
 from common.logging import logger
@@ -32,16 +31,12 @@ def add_task(timeout_processing: bool, task_id: str, func: Callable, asynchronou
     del asynchronous
 
 
-def stop_task():
+def stop_task() -> None:
     logger.info("正在停止调度器...")
-    try:
-        asyntask.stop_scheduler()
-    except:
-        pass
-    try:
-        linetask.stop_scheduler()
-    except:
-        pass
 
+    asyntask.stop_scheduler()
 
+    linetask.stop_scheduler()
+
+# 注册退出函数
 atexit.register(stop_task)

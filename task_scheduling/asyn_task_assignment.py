@@ -235,5 +235,5 @@ class AsynTask:
                 self.error_logs.pop(0)
 
 
-# 注册退出处理函数
+# 实例化对象
 asyntask = AsynTask()

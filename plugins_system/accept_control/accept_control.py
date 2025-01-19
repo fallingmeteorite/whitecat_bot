@@ -15,14 +15,14 @@ def accept_control(websocket: Any, uid: str, nickname: str, gid: str, message_di
     :param gid: 群组 ID。
     :param message_dict: 消息字典，包含发送的消息。
     """
-    from core.message_process import MessageProcessor
+    from core.message_process import message_processor
 
     if "stop" in message_dict["raw_message"]:
-        MessageProcessor.pause_message_processing = False
+        message_processor.pause_message_processing = False
         send_message(websocket, uid, gid, message="停止信息接受")
 
     if "start" in message_dict["raw_message"]:
-        MessageProcessor.pause_message_processing = True
+        message_processor.pause_message_processing = True
         send_message(websocket, uid, gid, message="开始信息接受")
 
 
