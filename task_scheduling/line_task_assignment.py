@@ -236,8 +236,10 @@ class LineTask:
             self.task_queue.get()
 
         # 等待调度线程结束
-        if self.scheduler_thread and self.scheduler_thread.is_alive():
-            self.scheduler_thread.join()
+
+        if self.scheduler_started:
+            if self.scheduler_thread.is_alive():
+                self.scheduler_thread.join()
 
         logger.info("调度线程已停止，所有资源已释放")
 
