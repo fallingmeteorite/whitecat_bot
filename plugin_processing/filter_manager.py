@@ -4,7 +4,7 @@ from typing import Callable, Dict, Tuple, Any
 from common.logging import logger
 from config.config import config
 from plugin_loading.plugins_load import load
-from task_scheduling.thread_scheduling import add_task
+from task_scheduling import add_task
 
 
 class FilterManager:
@@ -17,16 +17,15 @@ class FilterManager:
         """
         初始化过滤器管理器，创建核心字典 `filter_info` 用于存储过滤器信息。
         """
-        self.filter_info: Dict[str, Tuple[str, bool, bool, Callable]] = {}
+        self.filter_info: Dict[str, Tuple[str, bool, Callable]] = {}
 
-    def register_plugin(self, filter_name: str, filter_rule: str, asynchronous: bool, timeout_processing: bool,
+    def register_plugin(self, filter_name: str, filter_rule: str, timeout_processing: bool,
                         handler: Callable) -> None:
         """
         注册一个新的过滤器。
 
         :param filter_name: 过滤器名称。
         :param filter_rule: 过滤器筛选类型（正则表达式字符串）。
-        :param asynchronous: 是否异步处理。
         :param timeout_processing: 是否启用超时处理。
         :param handler: 处理函数。
         :raises ValueError: 如果 `handler` 不是可调用对象或 `filter_rule` 不是字符串。
@@ -35,7 +34,7 @@ class FilterManager:
             raise ValueError("Handler must be a callable function.")
         if not isinstance(filter_rule, str):
             raise ValueError("Filter rule must be a string representing a regex pattern.")
-        self.filter_info[filter_name] = (filter_rule, asynchronous, timeout_processing, handler)
+        self.filter_info[filter_name] = (filter_rule, timeout_processing, handler)
         logger.debug(f"FILTERS 过滤器:| {filter_name} |导入成功 FILTERS")
 
     def handle_message(self, websocket: Any, uid: int, gid: int, message_dict: dict, message: str,
@@ -50,12 +49,11 @@ class FilterManager:
         :param message: 接收到的消息。
         :param filter_name: 过滤器名称。
         """
-        filter_rule, asynchronous, timeout_processing, handler = self.filter_info[filter_name]
+        filter_rule, timeout_processing, handler = self.filter_info[filter_name]
         add_task(
             timeout_processing,
             filter_name,
             handler,
-            asynchronous,
             websocket,
             uid,
             gid,
@@ -65,7 +63,6 @@ class FilterManager:
 
         # 显式删除不再使用的变量
         del filter_rule
-        del asynchronous
         del timeout_processing
         del handler
 

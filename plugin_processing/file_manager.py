@@ -4,7 +4,7 @@ from typing import Callable, Dict, Tuple, Any
 from common.logging import logger
 from config.config import config
 from plugin_loading.plugins_load import load
-from task_scheduling.thread_scheduling import add_task
+from task_scheduling import add_task
 
 
 class FileManager:
@@ -17,21 +17,20 @@ class FileManager:
         """
         初始化文件管理器，创建核心字典 `file_info` 用于存储文件处理函数。
         """
-        self.file_info: Dict[str, Tuple[bool, bool, Callable]] = {}
+        self.file_info: Dict[str, Tuple[bool, Callable]] = {}
 
-    def register_file(self, name: str, asynchronous: bool, timeout_processing: bool, handler: Callable) -> None:
+    def register_file(self, name: str, timeout_processing: bool, handler: Callable) -> None:
         """
         注册文件处理插件。
 
         :param name: 文件名称。
-        :param asynchronous: 是否异步处理。
         :param timeout_processing: 是否启用超时处理。
         :param handler: 文件处理函数。
         :raises ValueError: 如果 `handler` 不是可调用对象。
         """
         if not callable(handler):
             raise ValueError("Handler must be a callable function.")
-        self.file_info[name] = (asynchronous, timeout_processing, handler)
+        self.file_info[name] = (timeout_processing, handler)
         logger.debug(f"FILE 文件检测:| {name} |导入成功 FILE")
 
     def handle_command(self, websocket: Any, uid: int, gid: int, nickname: str, message_dict: dict, file: str) -> None:
@@ -46,14 +45,13 @@ class FileManager:
         :param file: 文件名称。
         """
         # 获取文件处理函数及其配置
-        asynchronous, timeout_processing, handler = self.file_info[file]
+        timeout_processing, handler = self.file_info[file]
 
         # 添加任务到调度器
         add_task(
             timeout_processing,
             file,
             handler,
-            asynchronous,
             websocket,
             uid,
             nickname,
@@ -62,7 +60,6 @@ class FileManager:
         )
 
         # 显式删除不再使用的变量
-        del asynchronous
         del timeout_processing
         del handler
 

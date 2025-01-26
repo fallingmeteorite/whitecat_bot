@@ -37,7 +37,6 @@ def register(system_manager) -> None:
     system_manager.register_system(
         name=SYSTEM_NAME,
         commands=["/system_reboot"],
-        asynchronous=False,
         timeout_processing=True,
         handler=system_restarts
     )

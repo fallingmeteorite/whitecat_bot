@@ -35,7 +35,6 @@ def register(system_manager) -> None:
     system_manager.register_system(
         name=SYSTEM_NAME,
         commands=["/消息处理"],
-        asynchronous=False,
         timeout_processing=True,
         handler=accept_control
     )

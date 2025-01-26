@@ -77,7 +77,6 @@ def register(system_manager) -> None:
     system_manager.register_system(
         name=SYSTEM_NAME,
         commands=["/del_cache"],
-        asynchronous=False,
         timeout_processing=True,
         handler=del_cache
     )

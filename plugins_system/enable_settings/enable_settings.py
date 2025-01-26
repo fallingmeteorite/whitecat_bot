@@ -105,7 +105,6 @@ def register(system_manager) -> None:
     """
     system_manager.register_system(
         name=SYSTEM_NAME,
-        commands=["/插件修改"],
         asynchronous=False,
         timeout_processing=True,
         handler=lambda websocket, uid, nickname, gid, message_dict: enable_set(websocket, uid, nickname, gid,

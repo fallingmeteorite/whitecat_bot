@@ -1,38 +1,87 @@
-from typing import Dict
+from typing import Dict, Any
 
 import yaml
 
 from common.logging import logger
 
-# 全局配置字典，用于存储加载的配置
+# Global configuration dictionary to store loaded configurations
 config: Dict = {}
 
 
-def load_config(file_path: str) -> bool:
+def load_config(file_path: str = None) -> bool:
     """
-    加载配置文件到全局变量 `config` 中。
+    Load the configuration file into the global variable `config`.
 
     Args:
-        file_path (str): 配置文件路径。
+        file_path (str): Path to the configuration file.
 
     Returns:
-        bool: 配置文件是否成功加载。
+        bool: Whether the configuration file was successfully loaded.
     """
+    if file_path is None:
+        file_path = f'./config.yaml'
+
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
-            # 使用 yaml.safe_load 安全地加载 YAML 文件
-            config.update(yaml.safe_load(f))
-            logger.debug("配置文件已成功加载")
-            return True  # 返回 True 表示加载成功
-    except FileNotFoundError:
-        logger.error(f"配置文件未找到,请检查文件路径是否正确: {file_path}")
-    except yaml.YAMLError as error:
-        logger.error(f"配置文件解析错误: {error}")
+            # Safely load the YAML file using yaml.safe_load
+            config.clear()
+            config.update(yaml.safe_load(f) or {})
+            logger.info("Configuration file loaded successfully")
+            return True  # Return True indicating successful loading
     except Exception as error:
-        logger.error(f"加载配置文件时发生未知错误: {error}")
-    return False  # 返回 False 表示加载失败
+        logger.error(f"Unknown error occurred while loading configuration file: {error}")
+    return False  # Return False indicating loading failure
 
 
-# 加载配置文件
-if not load_config('config.yaml'):
-    logger.warning("配置文件加载失败,程序可能无法正常运行")
+def update_config(key: str, value: Any) -> bool:
+    """
+    Update a specific key-value pair in the global configuration dictionary.
+    Changes are only applied in memory and do not persist to the file.
+
+    Args:
+        key (str): The key to update in the configuration dictionary.
+        value: The new value to set for the specified key.
+
+    Returns:
+        bool: Whether the configuration was successfully updated in memory.
+    """
+    try:
+        # Update the global config directly
+        config[key] = value
+        logger.info(f"Configuration updated in memory: {key} = {value}")
+        return True  # Return True indicating successful update
+    except Exception as error:
+        logger.error(f"Unknown error occurred while updating configuration in memory: {error}")
+    return False  # Return False indicating update failure
+
+
+def save_config(file_path: str = None) -> bool:
+    """
+    Save the current in-memory configuration to the configuration file.
+
+    Args:
+        file_path (str): Path to the configuration file.
+
+    Returns:
+        bool: Whether the configuration was successfully saved to the file.
+    """
+    if file_path is None:
+        file_path = f'./config.yaml'
+
+    try:
+        with open(file_path, 'w', encoding='utf-8') as f:
+            yaml.safe_dump(config, f, default_flow_style=False, allow_unicode=True)
+        logger.info("Configuration saved to file successfully")
+        return True
+    except Exception as error:
+        logger.error(f"Unknown error occurred while saving configuration to file: {error}")
+    return False
+
+
+# Load configuration file only when needed
+def ensure_config_loaded():
+    if not config and not load_config():
+        logger.warning("Configuration file loading failed, the program may not run normally")
+
+
+ensure_config_loaded()

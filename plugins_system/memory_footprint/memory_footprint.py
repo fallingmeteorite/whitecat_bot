@@ -110,7 +110,6 @@ def register(system_manager) -> None:
     system_manager.register_system(
         name=SYSTEM_NAME,
         commands=["/系统情况"],
-        asynchronous=False,
         timeout_processing=True,
         handler=memory_footprint
     )

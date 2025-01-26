@@ -1,8 +1,7 @@
 import re
 from typing import Dict, Any, Optional
-
-from task_scheduling.asyn_task_assignment import asyntask
-from task_scheduling.line_task_assignment import linetask
+from common.message_send import send_message
+from task_scheduling import asyntask, linetask
 
 SYSTEM_NAME = "任务终止"  # 自定义插件名称
 
@@ -12,10 +11,11 @@ def parse_plugin_info(message: str) -> Optional[str]:
     解析插件类型和插件名称。
 
     :param message: 用户输入的消息。
-    :return: (插件类型, 插件名称)，如果解析失败则返回 (None, None)。
+    :return: 插件名称，如果解析失败则返回 None。
     """
     try:
-        plugin_name = re.findall(r'-(.*?)-', message)[0]
+        # 使用正则表达式匹配 | 之间的内容
+        plugin_name = re.findall(r'\|([^|]+)\|', message)[0]
         return plugin_name
     except IndexError:
         return None
@@ -33,9 +33,10 @@ def task_terminated(websocket: Any, uid: str, nickname: str, gid: str, message_d
     """
 
     message = message_dict["raw_message"].strip()
-    plugin_name = parse_plugin_info(message)
-    asyntask.force_stop_task(plugin_name)
-    linetask.force_stop_task(plugin_name)
+    plugin_id = parse_plugin_info(message)
+    asyntask.force_stop_task(plugin_id)
+    linetask.force_stop_task(plugin_id)
+    send_message(websocket, None, gid, message="任务结束成功")
 
 
 def register(system_manager) -> None:
@@ -47,7 +48,6 @@ def register(system_manager) -> None:
     system_manager.register_system(
         name=SYSTEM_NAME,
         commands=["/终止"],
-        asynchronous=False,
         timeout_processing=True,
         handler=task_terminated
     )

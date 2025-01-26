@@ -79,7 +79,7 @@ class MessageProcessor:
             Optional[str]: 插件名称，如果未找到则返回 None。
         """
         for plugin_name, plugin_info in plugin_commands.items():
-            if command in plugin_info[2]:
+            if command in plugin_info[1]:
                 return plugin_name
         return None
 

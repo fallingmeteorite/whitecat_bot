@@ -5,7 +5,7 @@ from typing import Callable, List, Tuple, Any
 from common.logging import logger
 from config.config import config
 from plugin_loading.plugins_load import load
-from task_scheduling.thread_scheduling import add_task
+from task_scheduling import add_task
 
 
 class TimerManager:
@@ -32,7 +32,7 @@ class TimerManager:
             if self.time_tasks:
                 timer_name, job_func, target_time = self.time_tasks[0]
                 # 防止因为超时被杀死
-                add_task(False, timer_name, job_func, asynchronous, websocket, gid, target_time)
+                add_task(False, timer_name, job_func, websocket, gid, target_time)
                 logger.debug(f"TIME | 定时器: {timer_name} 启动成功 | TIME")
                 del self.time_tasks[0]
                 # 显式删除不再使用的变量（每次循环后清理，保持清洁的内存）

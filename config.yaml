@@ -38,6 +38,12 @@ maximum_queue_async: 12
 # 线性任务同时间运行最多任务限制
 line_task_max: 4
 
+# 任务状态中可存储的最大记录数
+maximum_task_info_storage: 6
+
+# 当多秒无任务时，关闭任务调度器（秒）
+max_idle_time: 60
+
 # 用户使用次数信息储存
 user_use_file: ./user_use_count.json
 
@@ -55,5 +61,3 @@ watch_dog_time: 60
 
 # 管理员,只有管理员可以触发系统插件,用uid
 admin: [ ]
-
-

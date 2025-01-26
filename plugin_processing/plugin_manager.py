@@ -6,7 +6,7 @@ from common.message_send import send_message
 from config.config import config
 from permission_check.user_manager import tracker
 from plugin_loading.plugins_load import load
-from task_scheduling.thread_scheduling import add_task
+from task_scheduling import add_task
 
 
 class PluginManager:
@@ -19,16 +19,15 @@ class PluginManager:
         """
         初始化插件管理器，创建核心字典 `plugin_info` 用于存储插件信息。
         """
-        self.plugin_info: Dict[str, Tuple[bool, bool, List[str], Callable]] = {}
+        self.plugin_info: Dict[str, Tuple[bool, List[str], Callable]] = {}
         self.load_module: Dict = {}
 
-    def register_plugin(self, name: str, asynchronous: bool, timeout_processing: bool,
+    def register_plugin(self, name: str, timeout_processing: bool,
                         commands: List[str], handler: Callable) -> None:
         """
         注册一个新的插件。
 
         :param name: 插件名称。
-        :param asynchronous: 是否异步处理。
         :param timeout_processing: 是否启用超时处理。
         :param commands: 插件支持的命令列表。
         :param handler: 处理函数。
@@ -36,7 +35,7 @@ class PluginManager:
         """
         if not callable(handler):
             raise ValueError("Handler must be a callable function.")
-        self.plugin_info[name] = (asynchronous, timeout_processing, commands, handler)
+        self.plugin_info[name] = (timeout_processing, commands, handler)
         logger.debug(f"FUNC 功能插件:| {name} |导入成功 FUNC")
 
     def handle_command(self, websocket: Any, uid: int, gid: int, nickname: str, message: str, plugin_name: str) -> None:
@@ -51,12 +50,11 @@ class PluginManager:
         :param plugin_name: 插件名称。
         """
         if tracker.can_use_detection(uid, gid):
-            asynchronous, timeout_processing, _, handler = self.plugin_info[plugin_name]
+            timeout_processing, _, handler = self.plugin_info[plugin_name]
             add_task(
                 timeout_processing,
                 plugin_name,
                 handler,
-                asynchronous,
                 websocket,
                 uid,
                 nickname,

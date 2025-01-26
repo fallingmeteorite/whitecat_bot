@@ -8,7 +8,7 @@ from memory_management.memory_release import memory_release_decorator
 from module_processing.module_management import recorder
 from module_processing.timer import trigger_timer
 from plugin_loading.load_base import SimpleModuleLoader
-from task_scheduling.thread_scheduling import asyntask, linetask
+from task_scheduling import asyntask, linetask
 
 # 全局插件卸载管理器
 uninstall_manager = None

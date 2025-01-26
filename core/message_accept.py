@@ -15,6 +15,7 @@ from common.logging import logger
 from config.config import config
 from core.message_process import message_processor
 from plugin_processing.timer_manager import timer_manager
+from task_scheduling import shutdown
 
 
 class WebSocketManager:
@@ -141,6 +142,7 @@ class WebSocketManager:
         if self.loop:
             self.loop.stop()
         logger.warning("正在等待运行任务结束,请耐心等待")
+        shutdown(True)
         sys.exit()
 
 

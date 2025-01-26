@@ -41,7 +41,6 @@ def register(system_manager) -> None:
     system_manager.register_system(
         name=SYSTEM_NAME,
         commands=["/插件列表"],
-        asynchronous=False,
         timeout_processing=True,
         handler=plugs_display
     )

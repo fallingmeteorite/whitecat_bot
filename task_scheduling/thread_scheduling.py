@@ -1,42 +1,75 @@
-import atexit
+# -*- coding: utf-8 -*-
+import inspect
+import uuid
 from typing import Callable
 
 from common.logging import logger
-from .asyn_task_assignment import asyntask
-from .line_task_assignment import linetask
+from .scheduler.asyn_task_assignment import asyntask
+from .scheduler.line_task_assignment import linetask
 
 
-def add_task(timeout_processing: bool, task_id: str, func: Callable, asynchronous: bool, *args, **kwargs) -> None:
+def is_async_function(func: Callable) -> bool:
     """
-    向队列中添加任务，根据任务类型选择异步任务或线性任务。
+    Determine if a function is an asynchronous function.
 
-    :param timeout_processing: 是否启用超时处理。
-    :param task_id: 任务 ID。
-    :param func: 任务函数。
-    :param asynchronous: 是否异步执行任务。
-    :param args: 任务函数的位置参数。
-    :param kwargs: 任务函数的关键字参数。
+    :param func: The function to check.
+    :return: True if the function is asynchronous; otherwise, False.
     """
-    if asynchronous:
-        # 运行异步任务
-        asyntask.add_task(timeout_processing, task_id, func, *args, **kwargs)
+    return inspect.iscoroutinefunction(func)
+
+
+def add_task(timeout_processing: bool, task_name: str, func: Callable, *args, **kwargs) -> str or None:
+    """
+    Add a task to the queue, choosing between asynchronous or linear tasks based on the function type.
+    Generates a unique task ID and returns it.
+
+    :param timeout_processing: Whether to enable timeout processing.
+    :param task_name: task name
+    :param func: Task function.
+    :param args: Positional arguments for the task function.
+    :param kwargs: Keyword arguments for the task function.
+    :return: Unique task ID.
+    """
+    # Check if func is actually a function
+    if not callable(func):
+        logger.warning(f"The provided func is not a callable function")
+        return None
+
+    # Generate a unique task ID
+    task_id = str(uuid.uuid4())
+
+    if is_async_function(func):
+        # Run asynchronous task
+        state = asyntask.add_task(timeout_processing, task_name, task_id, func, *args, **kwargs)
     else:
-        # 运行线性任务
-        linetask.add_task(timeout_processing, task_id, func, *args, **kwargs)
+        # Run linear task
+        state = linetask.add_task(timeout_processing, task_name, task_id, func, *args, **kwargs)
 
-    # 显式删除不再使用的变量（可选）
-    del timeout_processing
-    del task_id
-    del func
-    del asynchronous
+    if state:
+        logger.info(f"Task added with ID: {task_id}")
+        return task_id
+    else:
+        logger.info(f"Failed to add a task: {task_id}")
+        return None
 
 
-def stop_task() -> None:
-    logger.info("正在停止调度器...")
+def shutdown(force_cleanup: bool) -> None:
+    """
+    :param force_cleanup: Force the end of a running task
 
-    asyntask.stop_scheduler()
+    Shutdown the scheduler, stop all tasks, and release resources.
+    Only checks if the scheduler is running and forces a shutdown if necessary.
+    """
+    # Shutdown asynchronous task scheduler if running
+    if hasattr(asyntask, "scheduler_started") and asyntask.scheduler_started:
+        logger.info("Detected asynchronous task scheduler is running, shutting down...")
+        asyntask.stop_scheduler(force_cleanup)
+        logger.info("Asynchronous task scheduler has been shut down.")
 
-    linetask.stop_scheduler()
+    # Shutdown linear task scheduler if running
+    if hasattr(linetask, "scheduler_started") and linetask.scheduler_started:
+        logger.info("Detected linear task scheduler is running, shutting down...")
+        linetask.stop_scheduler(force_cleanup)
+        logger.info("Linear task scheduler has been shut down.")
 
-# 注册退出函数
-atexit.register(stop_task)
+    logger.info("All schedulers have been shut down, resources have been released.")
