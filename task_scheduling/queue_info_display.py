@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import time
 from typing import Dict
 
 from config.config import config
@@ -19,13 +18,12 @@ def format_task_info(task_id: str, details: Dict) -> str:
     start_time = details.get("start_time", 0)
     end_time = details.get("end_time", 0)
     status = details.get("status", "unknown")
-    current_time = time.time()
 
     # Calculate elapsed time
     if end_time == "NaN":
         elapsed_time_display = "NaN"
     else:
-        elapsed_time = max(current_time - start_time, 0)
+        elapsed_time = max(end_time - start_time, 0)
         if not elapsed_time > config["watch_dog_time"]:
             elapsed_time_display = f"{elapsed_time:.2f}"
         else:
