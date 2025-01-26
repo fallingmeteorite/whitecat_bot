@@ -2,6 +2,7 @@
 import time
 from typing import Dict
 
+from config.config import config
 from .scheduler.asyn_task_assignment import asyntask
 from .scheduler.line_task_assignment import linetask
 
@@ -21,12 +22,14 @@ def format_task_info(task_id: str, details: Dict) -> str:
     current_time = time.time()
 
     # Calculate elapsed time
-    if status == "running":
-        elapsed_time = max(current_time - start_time, 0)
-        elapsed_time_display = f"{elapsed_time:.2f}"
-    else:
+    if end_time == "NaN":
         elapsed_time_display = "NaN"
-
+    else:
+        elapsed_time = max(current_time - start_time, 0)
+        if not elapsed_time > config["watch_dog_time"]:
+            elapsed_time_display = f"{elapsed_time:.2f}"
+        else:
+            elapsed_time_display = "NaN"
     # Add special hints based on status
     status_hint = {
         "timeout": " (Task timed out)",
