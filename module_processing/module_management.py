@@ -79,6 +79,8 @@ class ModuleKeyRecorder:
         collected = gc.collect()
         logger.debug(f"垃圾回收完成，释放了 {collected} 个对象")
 
+        # clear_all_free_lists()
+
         # 显式删除不再使用的变量
         del modules_to_remove
 

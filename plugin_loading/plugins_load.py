@@ -25,7 +25,6 @@ class PluginUninstall:
 
     # 注册过滤器并执行相应的卸载操作
     def register_filter(self, filter_name: str,
-                        asynchronous: Optional[bool] = None,
                         timeout_processing: Optional[bool] = None,
                         handler: Optional[callable] = None,
                         filter_rule: Optional[dict] = None) -> None:

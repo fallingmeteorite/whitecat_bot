@@ -13,51 +13,57 @@ system_dir: ./plugins_system
 adapter_dir: ./plugins_adapter
 
 #过滤器白名单
-valid_gids_list: [ ]
+valid_gids_list: { }
+
 
 #过滤器黑名单
-#例子:{uid号或者群号:[插件名字,all=所有插件]}
+#例子:{QQ号或者群号:[插件名字,all=所有插件]}
 ban_valid_uids: { }
 
 #插件白名单
-plugin_gids_list: [ ]
+plugin_gids_list: { }
 
 # 插件黑名单
-#例子:{uid号或者群号:[插件名字,all=所有插件]}
+#例子:{QQ号或者群号:[插件名字,all=所有插件]}
 ban_plugin_uids: { }
 
 #启动插件热加载
 enable_hot_loading: true
 
-# 线性功能最大排队队列
-maximum_queue_line: 12
+# 可以同时运行的线性任务的最大数量
+line_task_max: 10
 
-# 异步功能最大排队队列
-maximum_queue_async: 12
+# 异步任务的最大队列数
+maximum_queue_async: 30
 
-# 线性任务同时间运行最多任务限制
-line_task_max: 4
+# 线性任务的最大队列数
+maximum_queue_line: 30
 
-# 任务状态中可存储的最大记录数
-maximum_task_info_storage: 6
-
-# 当多秒无任务时，关闭任务调度器（秒）
+# 如果多秒没有任务，关闭任务调度器（秒）
 max_idle_time: 60
 
-# 用户使用次数信息储存
+# 当任务长时间运行未完成时，强制结束（秒）
+watch_dog_time: 60
+
+# 任务状态中可存储的最大记录数
+maximum_task_info_storage: 20
+
+# 在单个事件循环中运行的最大任务数
+maximum_event_loop_tasks: 3
+
+# 用户信息储存
 user_use_file: ./user_use_count.json
 
 # 定时器发布的群聊
 timer_gids_list: [ ]
 
 # 限制使用次数的群
-use_restricted_groups: [ ]
+use_restricted_groups: { }
 
-# 对于限制群,限制最大使用次数
-maximum_number_uses: 25
+# 限制最大使用次数
+maximum_number_uses: 10
 
-# 当任务执行超过多少秒后杀死(单位:秒)
-watch_dog_time: 60
+#管理员
+admin: { }
 
-# 管理员,只有管理员可以触发系统插件,用uid
-admin: [ ]
+

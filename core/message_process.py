@@ -63,8 +63,9 @@ class MessageProcessor:
                     self._process_files(item)
                     self._process_filters(item)
                 self.message_queue.task_done()
-                del item  # 显式删除 item
             except queue.Empty:
+                continue
+            except Exception:
                 continue
 
     def _find_plugin_by_command(self, command: str, plugin_commands: Dict[str, Any]) -> Optional[str]:
