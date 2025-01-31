@@ -33,7 +33,4 @@ class SkipContext:
 def skip_on_demand():
     """Context manager that supports manual skipping of the current line"""
     skip_ctx = SkipContext()
-    try:
-        yield skip_ctx  # Provide skip_ctx to external code
-    except StopException:
-        return  # Exit directly, skipping all code within the with block
+    yield skip_ctx  # Provide skip_ctx to external code

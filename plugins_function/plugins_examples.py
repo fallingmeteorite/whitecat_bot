@@ -1,6 +1,6 @@
 from typing import Dict, Any
 
-from common.message_send import send_message
+from message_action.message_send import send_message
 
 PLUGIN_NAME = "测试用 Echo 插件"  # 自定义插件名称
 

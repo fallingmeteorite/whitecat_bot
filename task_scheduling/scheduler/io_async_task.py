@@ -5,10 +5,10 @@ import threading
 import time
 from typing import Dict, List, Tuple, Callable, Optional, Any
 
-from common.logging import logger
-from config.config import config
-from memory_management.memory_release import memory_release_decorator
-from ..stopit.threadstop import ThreadingTimeout, TimeoutException
+from common import logger
+from config import config
+from memory_management import memory_release_decorator
+from ..stopit import ThreadingTimeout, TimeoutException
 
 
 class IoAsyncTask:
@@ -19,7 +19,7 @@ class IoAsyncTask:
         'task_queues', 'condition', 'scheduler_lock', 'scheduler_started', 'scheduler_stop_event',
         'task_details', 'running_tasks', 'error_logs', 'scheduler_threads', 'event_loops',
         'banned_task_ids', 'idle_timers', 'idle_timeout', 'idle_timer_lock', 'task_results',
-        'task_counters'
+        'task_counters', 'status_check_timer'
     ]
 
     def __init__(self) -> None:
@@ -35,13 +35,69 @@ class IoAsyncTask:
         self.running_tasks: Dict[str, list[Any]] = {}  # Use weak references to reduce memory usage
         self.error_logs: List[Dict] = []  # Error logs, keep up to 10
         self.scheduler_threads: Dict[str, threading.Thread] = {}  # Scheduler threads for each task name
-        self.event_loops: Dict[str, asyncio.AbstractEventLoop] = {}  # Event loops for each task name
+        self.event_loops: Dict[str, Any] = {}  # Event loops for each task name
         self.banned_task_ids: List[str] = []  # List of task IDs to be banned
         self.idle_timers: Dict[str, threading.Timer] = {}  # Idle timers for each task name
         self.idle_timeout = config["max_idle_time"]  # Idle timeout, default is 60 seconds
         self.idle_timer_lock = threading.Lock()  # Idle timer lock
         self.task_results: Dict[str, List[Any]] = {}  # Store task return results, keep up to 2 results for each task ID
         self.task_counters: Dict[str, int] = {}  # Used to track the number of tasks being executed in each event loop
+        self.status_check_timer: threading.Timer or bool = True  # check the status of a task
+
+    def _check_running_tasks_status(self) -> None:
+        """
+        The scheduled checks whether a task with a status of 'running' is actually running.
+        If the task has been completed but the status is still 'running', the status is corrected and the appropriate action is taken.
+        """
+        with self.condition:
+            task_details_copy = self.task_details.copy()
+
+        for task_id, details in list(
+                task_details_copy.items()):  # Use list() to create a copy to avoid errors when modifying the dictionary
+            if details.get("status") == "running":
+                start_time = details.get("start_time")
+                current_time = time.time()
+                timeout_processing = details.get("timeout_processing", False)  # 获取任务的超时管理标志
+
+                # If timeout management is enabled for the task and the maximum allowed time is exceeded, the task is forcibly canceled
+                if timeout_processing and (current_time - start_time > config["watch_dog_time"]):
+                    # If the task is still running in the task dictionary, try canceling it
+                    if task_id in self.running_tasks:
+                        future = self.running_tasks[task_id][0]
+                        if not future.done():
+                            future.cancel()
+                            logger.warning(
+                                f"Io asyncio task | {task_id} | has been forcibly cancelled due to timeout")
+                            with self.condition:
+                                self.task_details[task_id]["status"] = "cancelled"
+                                self.task_details[task_id]["end_time"] = "NaN"
+
+                    # Removed from the running task dictionary
+                    if task_id in self.running_tasks:
+                        with self.condition:
+                            del self.running_tasks[task_id]
+
+                    # Reduce task counters
+                    task_name = details.get("task_name")
+                    if task_name in self.task_counters:
+                        with self.condition:
+                            self.task_counters[task_name] -= 1
+
+        # Restart the timer
+        # Prevent the shutdown operation from being started while it is executed
+        if not self.scheduler_stop_event.is_set():
+            self.status_check_timer = threading.Timer(
+                config["status_check_interval"], self._check_running_tasks_status
+            )
+            self.status_check_timer.start()
+
+    def stop_status_check_timer(self) -> None:
+        """
+        Stop state detection timer.
+        """
+        if self.status_check_timer:
+            self.status_check_timer.cancel()
+            logger.info("Status check timer has been stopped")
 
     # Add the task to the scheduler
     def add_task(self, timeout_processing: bool, task_name: str, task_id: str, func: Callable, *args, **kwargs) -> bool:
@@ -74,7 +130,8 @@ class IoAsyncTask:
                     self.task_details[task_id] = {
                         "task_name": task_name,
                         "start_time": None,
-                        "status": "pending"
+                        "status": "pending",
+                        "timeout_processing": timeout_processing
                     }
 
                 self.task_queues[task_name].put((timeout_processing, task_name, task_id, func, args, kwargs))
@@ -91,6 +148,12 @@ class IoAsyncTask:
                 with self.condition:
                     self.condition.notify()  # Notify the scheduler thread that a new task is available
 
+                # Determine if it is the first time to start
+                if type(self.status_check_timer) == bool:
+                    self.status_check_timer = threading.Timer(config["status_check_interval"],
+                                                              self._check_running_tasks_status)
+                    self.status_check_timer.start()  # Start a timer to check the status of a task
+
                 return True
         except Exception as e:
             logger.error(f"Error adding task | {task_id} |: {e}")
@@ -103,6 +166,7 @@ class IoAsyncTask:
 
         :param task_name: Task name.
         """
+
         with self.condition:
             if task_name not in self.scheduler_threads or not self.scheduler_threads[task_name].is_alive():
                 self.scheduler_started = True
@@ -181,6 +245,9 @@ class IoAsyncTask:
                     return None
 
             logger.warning("Exit cleanup")
+            # Stop status monitor
+            if not system_operations:
+                self.stop_status_check_timer()
 
             with self.condition:
                 self.scheduler_started = False
@@ -225,7 +292,6 @@ class IoAsyncTask:
 
         while not self.scheduler_stop_event.is_set():
             with self.condition:
-                # Wait for the task queue to be not empty and the number of tasks in the current event loop is less than 3
                 while (self.task_queues[task_name].empty() or self.task_counters[
                     task_name] >= config["maximum_event_loop_tasks"]) and not self.scheduler_stop_event.is_set():
                     self.condition.wait()
@@ -238,13 +304,13 @@ class IoAsyncTask:
 
                 task = self.task_queues[task_name].get()
 
+            # Execute the task after the lock is released
             timeout_processing, task_name, task_id, func, args, kwargs = task
-
             future = asyncio.run_coroutine_threadsafe(self._execute_task(task), self.event_loops[task_name])
 
             with self.condition:
                 self.running_tasks[task_id] = [future, task_name]
-                self.task_counters[task_name] += 1  # Add task counters
+                self.task_counters[task_name] += 1
 
     # A function that executes a task
     @memory_release_decorator
@@ -290,12 +356,7 @@ class IoAsyncTask:
             with self.condition:
                 self.task_details[task_id]["status"] = "completed"
 
-        except asyncio.TimeoutError:
-            logger.warning(f"Io asyncio task | {task_id} | timed out, forced termination")
-            with self.condition:
-                self.task_details[task_id]["status"] = "timeout"
-                self.task_details[task_id]["end_time"] = 'NaN'
-        except TimeoutException:
+        except (asyncio.TimeoutError, TimeoutException):
             logger.warning(f"Io asyncio task | {task_id} | timed out, forced termination")
             with self.condition:
                 self.task_details[task_id]["status"] = "timeout"
@@ -322,8 +383,9 @@ class IoAsyncTask:
                 if task_id in self.running_tasks:
                     del self.running_tasks[task_id]
 
-                # Reduce task counters
-                self.task_counters[task_name] -= 1
+                # Reduce task counters (ensure it doesn't go below 0)
+                if task_name in self.task_counters and self.task_counters[task_name] > 0:
+                    self.task_counters[task_name] -= 1
 
                 # Check if all tasks are completed
                 if self.task_queues[task_name].empty() and len(self.running_tasks) == 0:
@@ -377,7 +439,7 @@ class IoAsyncTask:
         with self.idle_timer_lock:
             if task_name in self.idle_timers and self.idle_timers[task_name] is not None:
                 self.idle_timers[task_name].cancel()
-                self.idle_timers[task_name] = None
+                del self.idle_timers[task_name]
 
     def _clear_task_queue(self, task_name: str) -> None:
         """
@@ -386,7 +448,7 @@ class IoAsyncTask:
         :param task_name: Task name.
         """
         while not self.task_queues[task_name].empty():
-            self.task_queues[task_name].get()
+            self.task_queues[task_name].get(timeout=1)
 
     def _join_scheduler_thread(self, task_name: str) -> None:
         """
@@ -443,13 +505,13 @@ class IoAsyncTask:
 
         :param task_id: Task ID.
         """
-        with self.condition:
-            if task_id in self.running_tasks:
-                future = self.running_tasks[task_id][0]
-                future.cancel()
-                logger.warning(f"Io asyncio task | {task_id} | has been forcibly cancelled")
-            else:
-                logger.warning(f"Io asyncio task | {task_id} | does not exist or is already completed")
+
+        # Read operation, no need to hold a lock
+        if task_id in self.running_tasks:
+            future = self.running_tasks[task_id][0]
+            future.cancel()
+        else:
+            logger.warning(f"Io asyncio task | {task_id} | does not exist or is already completed")
 
     def cancel_all_queued_tasks_by_name(self, task_name: str) -> None:
         """
@@ -512,7 +574,6 @@ class IoAsyncTask:
                 if not self.task_results[task_id]:
                     del self.task_results[task_id]
             return result
-        logger.warning(f"Io asyncio task | {task_id} | does not exist or has been completed and removed")
         return None
 
     def _run_event_loop(self, task_name: str) -> None:
@@ -578,7 +639,7 @@ class IoAsyncTask:
 
                 # Filter out tasks with status 'failed', 'completed', or 'timeout'
                 new_task_details = {task_id: details for task_id, details in task_details_copy.items()
-                                    if details.get("status") in ["pending", "running"]}
+                                    if details.get("status") in ["pending", "running", "cancelled", "failed"]}
 
                 # Update the task details with the filtered results
                 self.task_details = new_task_details
@@ -597,5 +658,4 @@ class IoAsyncTask:
             return None
 
 
-# Instantiate object
 io_async_task = IoAsyncTask()

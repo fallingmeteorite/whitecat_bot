@@ -1,5 +1,6 @@
 from typing import Dict, Set
-from config.config import config
+
+from config import config
 
 
 def is_command_allowed(uid: int, gid: int, command: str, gids_key: str, ban_key: str) -> bool:

@@ -1,21 +1,13 @@
 import queue
-import threading
 import signal
+import threading
 import weakref
 from typing import Dict, Optional, Tuple, Any
 
-from common.logging import logger
-from config.config import config
-from permission_check.block_manager import ban_filter, ban_plugin
-# 加载所有插件
-# 先加载适配器
-from plugin_processing.adapter_manager import adapter_manager
-# 其他插件加载
-from plugin_processing.file_manager import file_manager
-from plugin_processing.filter_manager import filter_manager
-from plugin_processing.plugin_manager import plugin_manager
-# 系统插件
-from plugin_processing.system_manager import system_manager
+from common import logger
+from config import config
+from permission_check import ban_filter, ban_plugin
+from plugin_processing import file_manager, filter_manager, plugin_manager, system_manager, adapter_manager
 
 
 class MessageProcessor:

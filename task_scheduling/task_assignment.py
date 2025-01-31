@@ -3,9 +3,8 @@ import uuid
 from typing import Callable
 
 from common.logging import logger
-from .scheduler.io_async_task import io_async_task
-from .scheduler.io_liner_task import io_liner_task
-from .scheduler.utils import detector
+from .scheduler import io_async_task, io_liner_task
+from .scheduler.utils import is_async_function
 
 
 def add_task(timeout_processing: bool, task_name: str, func: Callable, *args, **kwargs) -> str or None:
@@ -28,7 +27,7 @@ def add_task(timeout_processing: bool, task_name: str, func: Callable, *args, **
     # Generate a unique task ID
     task_id = str(uuid.uuid4())
 
-    if detector.is_async_function(func):
+    if is_async_function(func):
         # Run asynchronous task
         state = io_async_task.add_task(timeout_processing, task_name, task_id, func, *args, **kwargs)
         if state:
@@ -65,4 +64,5 @@ def shutdown(force_cleanup: bool) -> None:
         io_liner_task.stop_scheduler(force_cleanup)
         logger.info("Io linear task scheduler has been shut down.")
 
-    logger.info("The closure was successful.")
+    logger.info("All scheduler has been shut down.")
+

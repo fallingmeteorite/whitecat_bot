@@ -4,7 +4,7 @@ import json
 import weakref
 from typing import Optional, Dict, Any
 
-from common.logging import logger
+from common import logger
 
 
 def is_in_event_loop() -> bool:

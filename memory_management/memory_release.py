@@ -7,8 +7,8 @@ import sys
 import weakref
 from typing import Callable, Any, Dict
 
-from config.config import config
-from common.logging import logger
+from common import logger
+from config import config
 
 # 根据操作系统加载对应的 C 库
 if os.name == 'nt':  # Windows

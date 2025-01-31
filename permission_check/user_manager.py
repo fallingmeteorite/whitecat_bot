@@ -1,7 +1,7 @@
 import json
 from typing import Dict, Optional
 
-from config.config import config
+from config import config
 
 
 class UserUsageTracker:

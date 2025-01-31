@@ -1,9 +1,9 @@
 import asyncio
 from typing import Callable, Dict, Tuple, Any
 
-from common.logging import logger
-from config.config import config
-from plugin_loading.plugins_load import load
+from common import logger
+from config import config
+from plugin_loading import load
 from task_scheduling import add_task
 
 

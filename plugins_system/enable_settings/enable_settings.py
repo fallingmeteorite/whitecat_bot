@@ -3,8 +3,8 @@ import re
 import shutil
 from typing import Dict, Optional, Tuple, Any
 
-from common.message_send import send_message
-from config.config import config
+from config import config
+from message_action import send_message
 
 SYSTEM_NAME = "插件管理"  # 自定义插件名称
 

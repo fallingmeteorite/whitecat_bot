@@ -1,8 +1,8 @@
 from typing import Optional, Tuple, Any, Dict, Callable
 
-from common.logging import logger
-from config.config import config
-from plugin_loading.plugins_load import load
+from common import logger
+from config import config
+from plugin_loading import load
 
 
 class AdapterManager:

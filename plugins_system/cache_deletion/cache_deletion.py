@@ -1,8 +1,8 @@
 import os
 from typing import Dict, Any
 
-from common.logging import logger
-from common.message_send import send_message
+from common import logger
+from message_action import send_message
 
 SYSTEM_NAME = "缓存删除"  # 自定义插件名称
 
@@ -53,7 +53,7 @@ def del_cache(websocket: Any, uid: str, nickname: str, gid: str, message_dict: D
     """
     message = message_dict['raw_message'].strip().lower()
 
-    folder_path_list = ["log"]
+    folder_path_list = []
 
     if "temp" in message:
         for folder_path in folder_path_list:

@@ -1,9 +1,9 @@
 import asyncio
 from typing import Callable, Dict, Tuple, Any
 
-from common.logging import logger
-from config.config import config
-from plugin_loading.plugins_load import load
+from common import logger
+from config import config
+from plugin_loading import load
 from task_scheduling import add_task
 
 
@@ -79,4 +79,4 @@ if enable_hot_loading:
     # 启动插件文件夹监视
     asyncio.run(start_monitoring(filter_dir, load_module, filter_manager))
 
-del load_module # 显式删除不再使用的变量
+del load_module  # 显式删除不再使用的变量

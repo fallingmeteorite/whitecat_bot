@@ -1,7 +1,6 @@
-import time
 from typing import Dict, Any
 
-from common.message_send import send_message
+from message_action import send_message
 from task_scheduling import get_all_queue_info
 
 SYSTEM_NAME = "任务显示"  # 自定义插件名称
@@ -18,6 +17,7 @@ def send_notification(websocket: Any, uid: str, gid: str, message: str) -> None:
     """
     send_message(websocket, uid, gid, message=message)
 
+
 def task_display(websocket: Any, uid: str, nickname: str, gid: str, message_dict: Dict) -> None:
     """
     处理任务队列信息的显示。
@@ -29,8 +29,8 @@ def task_display(websocket: Any, uid: str, nickname: str, gid: str, message_dict
     :param message_dict: 消息字典，包含发送的消息。
     """
 
-    info = get_all_queue_info("line")
-    info += get_all_queue_info("asyncio")
+    info = get_all_queue_info("line", True)
+    info += get_all_queue_info("asyncio", True)
     send_notification(websocket, uid, gid, message=info)
 
 

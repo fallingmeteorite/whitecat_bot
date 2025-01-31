@@ -11,10 +11,10 @@ from typing import Optional, Any
 import websockets
 import websockets.exceptions
 
-from common.logging import logger
-from config.config import config
-from core.message_process import message_processor
-from plugin_processing.timer_manager import timer_manager
+from common import logger
+from config import config
+from message_action import message_processor
+from plugin_processing import timer_manager
 from task_scheduling import shutdown
 
 

@@ -2,7 +2,7 @@ from typing import Dict, Any
 
 import psutil
 
-from common.message_send import send_message
+from message_action import send_message
 
 SYSTEM_NAME = "内存和CPU查询"  # 自定义插件名称
 

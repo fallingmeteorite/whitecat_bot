@@ -1,7 +1,7 @@
 import os
 import threading
 
-from common.logging import logger
+from common import logger
 
 
 class ThreadController:

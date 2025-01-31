@@ -3,10 +3,10 @@ import os
 import time
 from typing import Optional
 
-from common.logging import logger
-from config.config import config
-from memory_management.memory_release import simple_memory_release_decorator
-from thread_creation.thread_creation import ThreadController
+from common import logger
+from config import config
+from memory_management import simple_memory_release_decorator
+from thread_creation import ThreadController
 
 
 class Application:

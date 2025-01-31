@@ -2,7 +2,7 @@ from typing import Dict, Any
 
 import yaml
 
-from common.logging import logger
+from common import logger
 
 # Global configuration dictionary to store loaded configurations
 config: Dict = {}
@@ -24,7 +24,7 @@ def load_config(file_path: str = None) -> bool:
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
             # Safely load the YAML file using yaml.safe_load
-            config.clear()
+            global config
             config.update(yaml.safe_load(f) or {})
             logger.info("Configuration file loaded successfully")
             return True  # Return True indicating successful loading
@@ -47,6 +47,7 @@ def update_config(key: str, value: Any) -> bool:
     """
     try:
         # Update the global config directly
+        global config
         config[key] = value
         logger.info(f"Configuration updated in memory: {key} = {value}")
         return True  # Return True indicating successful update
@@ -70,6 +71,7 @@ def save_config(file_path: str = None) -> bool:
 
     try:
         with open(file_path, 'w', encoding='utf-8') as f:
+            global config
             yaml.safe_dump(config, f, default_flow_style=False, allow_unicode=True)
         logger.info("Configuration saved to file successfully")
         return True
@@ -80,8 +82,6 @@ def save_config(file_path: str = None) -> bool:
 
 # Load configuration file only when needed
 def ensure_config_loaded():
+    global config
     if not config and not load_config():
         logger.warning("Configuration file loading failed, the program may not run normally")
-
-
-ensure_config_loaded()

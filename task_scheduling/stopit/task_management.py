@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from typing import Dict, Any
 
-from common.logging import logger
+from common import logger
 
 
 class TaskManager:
@@ -31,7 +31,6 @@ class TaskManager:
             task_control = self.data[task_id]['task_control']
             try:
                 task_control.stop()
-                logger.warning(f"A stop command has been issued to the task '{task_id}'")
             except Exception as error:
                 logger.error(error)
         else:
@@ -44,7 +43,6 @@ class TaskManager:
         for task_id, task_data in self.data.items():
             try:
                 task_data['task_control'].stop()
-                logger.warning(f"'{task_id}' stopped successfully")
             except Exception as error:
                 logger.error(error)
 
@@ -78,7 +76,6 @@ class TaskManager:
             skip_ctx = self.data[task_id]['skip_ctx']
             try:
                 skip_ctx.skip()
-                logger.warning(f"A skip command has been issued to the task '{task_id}'")
             except Exception as error:
                 logger.error(error)
         else:
@@ -91,7 +88,6 @@ class TaskManager:
         for task_id, task_data in self.data.items():
             try:
                 task_data['skip_ctx'].skip()
-                logger.warning(f"'{task_id}' skipped successfully")
             except Exception as error:
                 logger.error(error)
 

@@ -2,9 +2,9 @@
 import time
 from typing import Dict, List
 
-from config.config import config
-from .scheduler.io_liner_task import io_liner_task
-from .scheduler.io_async_task import io_async_task
+from config import config
+from .scheduler import io_async_task
+from .scheduler import io_liner_task
 
 
 def format_task_info(task_id: str, details: Dict, show_id: bool) -> str:
@@ -23,13 +23,22 @@ def format_task_info(task_id: str, details: Dict, show_id: bool) -> str:
     status = details.get("status", "unknown")
 
     # Calculate elapsed time
-    if end_time == 0:
-        current_time = time.time()
-        elapsed_time = max(current_time - start_time, 0)
+    if status == "pending":
+        pass
+
+    if status == "completed":
+        elapsed_time = max(end_time - start_time, 0)
         if not elapsed_time > config["watch_dog_time"]:
             elapsed_time_display = f"{elapsed_time:.2f}"
-    elif not end_time == "NaN":
+
+    if status == "failed":
         elapsed_time = max(end_time - start_time, 0)
+        if not elapsed_time > config["watch_dog_time"]:
+            elapsed_time_display = f"{elapsed_time:.2f}"
+
+    if status == "running":
+        current_time = time.time()
+        elapsed_time = max(current_time - start_time, 0)
         if not elapsed_time > config["watch_dog_time"]:
             elapsed_time_display = f"{elapsed_time:.2f}"
 
@@ -66,8 +75,8 @@ def get_queue_info_string(task_queue, queue_type: str, show_id: bool) -> str:
 
         # Output task details
         for task_id, details in queue_info['task_details'].items():
-            if details["status"] != "pending":
-                info.append(format_task_info(task_id, details, show_id))
+            # if details["status"] != "pending":
+            info.append(format_task_info(task_id, details, show_id))
 
         if queue_info.get("error_logs"):
             info.append(f"\n{queue_type} error logs:\n")

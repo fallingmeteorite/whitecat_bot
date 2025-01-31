@@ -3,8 +3,8 @@ import os
 from datetime import datetime, timedelta, time
 from typing import Any
 
-from common.message_send import send_message  # 导入发送消息的函数
-from config.config import config
+from message_action import send_message  # 导入发送消息的函数
+from config import config
 
 
 def info_reset(websocket: Any) -> None:

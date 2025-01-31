@@ -1,9 +1,9 @@
 from typing import Dict, List, Any
 
-from common.logging import logger
-from common.message_send import send_message
-from config.config import config
-from plugin_loading.plugins_load import get_directories
+from common import logger
+from config import config
+from message_action import send_message
+from plugin_loading import get_directories
 
 SYSTEM_NAME = "插件展示"  # 自定义插件名称
 

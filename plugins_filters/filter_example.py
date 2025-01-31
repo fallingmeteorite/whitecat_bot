@@ -1,5 +1,5 @@
 from typing import Any
-from common.message_send import send_message
+from message_action.message_send import send_message
 
 
 def example_filter_function(websocket: Any, uid: int, gid: int, message_dict: dict) -> bool:

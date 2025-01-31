@@ -2,10 +2,10 @@ import threading
 import time
 import weakref
 from functools import lru_cache
-from common.logging import logger
+
+from common import logger
 from plugin_loading.plugins_load import reload
-from watchdog.observers import Observer
-from watchdog.utils.events import FileSystemEventHandler
+from watchdog import Observer, FileSystemEventHandler
 
 # 创建一个全局锁对象，用于线程同步
 lock = threading.Lock()

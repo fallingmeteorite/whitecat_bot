@@ -2,7 +2,7 @@ import threading
 import weakref
 from typing import Callable, Optional, Any
 
-from common.logging import logger
+from common import logger
 
 
 class ResettableTimer:

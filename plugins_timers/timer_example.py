@@ -2,7 +2,7 @@ import asyncio
 from datetime import datetime, timedelta, time
 from typing import Any, List
 
-from common.message_send import send_message  # 导入发送消息的函数
+from message_action import send_message  # 导入发送消息的函数
 
 
 def main(websocket: Any, gid_all: List[str]) -> None:

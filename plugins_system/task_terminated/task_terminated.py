@@ -1,7 +1,8 @@
 import re
 from typing import Dict, Any, Optional
-from common.message_send import send_message
-from task_scheduling import asyntask, linetask
+
+from message_action import send_message
+from task_scheduling import io_liner_task, io_async_task
 
 SYSTEM_NAME = "任务终止"  # 自定义插件名称
 
@@ -34,8 +35,8 @@ def task_terminated(websocket: Any, uid: str, nickname: str, gid: str, message_d
 
     message = message_dict["raw_message"].strip()
     plugin_id = parse_plugin_info(message)
-    asyntask.force_stop_task(plugin_id)
-    linetask.force_stop_task(plugin_id)
+    io_liner_task.force_stop_task(plugin_id)
+    io_async_task.force_stop_task(plugin_id)
     send_message(websocket, None, gid, message="任务结束成功")
 
 

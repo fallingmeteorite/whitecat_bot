@@ -1,11 +1,11 @@
 import asyncio
 from typing import Callable, Dict, List, Tuple, Any
 
-from common.logging import logger
-from common.message_send import send_message
-from config.config import config
-from permission_check.user_manager import tracker
-from plugin_loading.plugins_load import load
+from common import logger
+from config import config
+from message_action import send_message
+from permission_check import tracker
+from plugin_loading import load
 from task_scheduling import add_task
 
 

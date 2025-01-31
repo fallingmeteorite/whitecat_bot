@@ -17,14 +17,14 @@ valid_gids_list: { }
 
 
 #过滤器黑名单
-#例子:{QQ号或者群号:[插件名字,all=所有插件]}
+#例子:{uid号或者群号:[插件名字,all=所有插件]}
 ban_valid_uids: { }
 
 #插件白名单
 plugin_gids_list: { }
 
 # 插件黑名单
-#例子:{QQ号或者群号:[插件名字,all=所有插件]}
+#例子:{uid号或者群号:[插件名字,all=所有插件]}
 ban_plugin_uids: { }
 
 #启动插件热加载
@@ -50,6 +50,9 @@ maximum_task_info_storage: 20
 
 # 在单个事件循环中运行的最大任务数
 maximum_event_loop_tasks: 3
+
+# 检查任务状态是否正确的秒数，建议间隔更长（秒）
+status_check_interval: 800
 
 # 用户信息储存
 user_use_file: ./user_use_count.json

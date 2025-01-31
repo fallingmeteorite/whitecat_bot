@@ -3,12 +3,10 @@ import gc
 import os
 from typing import Dict, Any, Optional
 
-from common.logging import logger
-from memory_management.memory_release import memory_release_decorator
-from module_processing.module_management import recorder
-from module_processing.timer import trigger_timer
+from common import logger
+from memory_management import memory_release_decorator
+from module_processing import recorder, trigger_timer
 from plugin_loading.load_base import SimpleModuleLoader
-from task_scheduling import asyntask, linetask
 
 # 全局插件卸载管理器
 uninstall_manager = None
@@ -28,10 +26,6 @@ class PluginUninstall:
                         timeout_processing: Optional[bool] = None,
                         handler: Optional[callable] = None,
                         filter_rule: Optional[dict] = None) -> None:
-
-        # 强制停止与过滤器相关的异步任务和线性任务
-        asyntask.force_stop_task(filter_name)
-        linetask.force_stop_task(filter_name)
         # 从卸载管理器中删除过滤器信息
         del uninstall_manager.filter_info[filter_name]
 
@@ -41,22 +35,14 @@ class PluginUninstall:
                         asynchronous: Optional[bool] = None,
                         timeout_processing: Optional[bool] = None,
                         handler: Optional[callable] = None) -> None:
-
-        # 强制停止与插件相关的异步任务和线性任务
-        asyntask.force_stop_task(name)
-        linetask.force_stop_task(name)
         # 从卸载管理器中删除插件信息
         del uninstall_manager.plugin_info[name]
 
     # 注册文件并执行相应的卸载操作
     def register_file(self, name: str,
-                        asynchronous: Optional[bool] = None,
-                        timeout_processing: Optional[bool] = None,
-                        handler: Optional[callable] = None) -> None:
-
-        # 强制停止与文件相关的异步任务和线性任务
-        asyntask.force_stop_task(name)
-        linetask.force_stop_task(name)
+                      asynchronous: Optional[bool] = None,
+                      timeout_processing: Optional[bool] = None,
+                      handler: Optional[callable] = None) -> None:
         # 从卸载管理器中删除文件信息
         del uninstall_manager.file_info[name]
 
@@ -64,10 +50,7 @@ class PluginUninstall:
     def register_timer(self, timer_name: str,
                        target_time: Optional[int] = None,
                        handler: Optional[callable] = None) -> None:
-
-        # 强制停止与定时器相关的异步任务和线性任务
-        asyntask.force_stop_task(timer_name)
-        linetask.force_stop_task(timer_name)
+        pass
 
 
 def get_directories(path: str) -> list:

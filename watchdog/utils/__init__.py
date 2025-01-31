@@ -13,16 +13,10 @@ Classes
 """
 
 from __future__ import annotations
-from .events import *
 
-import sys
 import threading
-from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from types import ModuleType
-
-    from watchdog.tricks import Trick
+from .events import *
 
 
 class UnsupportedLibcError(Exception):
@@ -75,49 +69,3 @@ class BaseThread(threading.Thread):
     def start(self) -> None:
         self.on_thread_start()
         threading.Thread.start(self)
-
-
-def load_module(module_name: str) -> ModuleType:
-    """Imports a module given its name and returns a handle to it."""
-    try:
-        __import__(module_name)
-    except ImportError as e:
-        error = f"No module named {module_name}"
-        raise ImportError(error) from e
-    return sys.modules[module_name]
-
-
-def load_class(dotted_path: str) -> type[Trick]:
-    """Loads and returns a class definition provided a dotted path
-    specification the last part of the dotted path is the class name
-    and there is at least one module name preceding the class name.
-
-    Notes
-    -----
-    You will need to ensure that the module you are trying to load
-    exists in the Python path.
-
-    Examples
-    --------
-    - module.name.ClassName    # Provided module.name is in the Python path.
-    - module.ClassName         # Provided module is in the Python path.
-
-    What won't work:
-    - ClassName
-    - modle.name.ClassName     # Typo in module name.
-    - module.name.ClasNam      # Typo in classname.
-
-    """
-    dotted_path_split = dotted_path.split(".")
-    if len(dotted_path_split) <= 1:
-        error = f"Dotted module path {dotted_path} must contain a module name and a classname"
-        raise ValueError(error)
-    klass_name = dotted_path_split[-1]
-    module_name = ".".join(dotted_path_split[:-1])
-
-    module = load_module(module_name)
-    if hasattr(module, klass_name):
-        return getattr(module, klass_name)
-
-    error = f"Module {module_name} does not have class attribute {klass_name}"
-    raise AttributeError(error)

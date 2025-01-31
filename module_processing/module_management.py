@@ -3,7 +3,7 @@ import sys
 import weakref
 from typing import Set, Dict, Any, Optional
 
-from common.logging import logger
+from common import logger
 
 
 class ModuleKeyRecorder:

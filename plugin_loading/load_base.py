@@ -1,12 +1,12 @@
+import ast
 import gc
 import os
 import sys
 import types
 import weakref
-import ast
 from typing import Set
 
-from common.logging import logger
+from common import logger
 
 
 class SimpleModuleLoader:
@@ -137,4 +137,3 @@ class SimpleModuleLoader:
         gc.collect()
 
         logger.debug("尝试将内存归还给操作系统")
-
